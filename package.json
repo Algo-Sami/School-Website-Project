@@ -1,0 +1,14 @@
+{
+  "name": "ashraf-islamia-mpss-website",
+  "version": "1.0.0",
+  "description": "Official website of Ashraf Islamia Model Public Secondary School",
+  "private": true,
+  "scripts": {
+    "dev": "npx --yes serve . --listen 3000 --no-clipboard",
+    "start": "npx --yes serve . --listen 3000",
+    "open": "start http://localhost:3000"
+  },
+  "keywords": ["school", "education", "website"],
+  "author": "Ashraf Islamia Model Public Secondary School",
+  "license": "UNLICENSED"
+}
