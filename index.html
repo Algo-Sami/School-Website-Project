@@ -75,152 +75,290 @@
   ═══════════════════════════════════════════════════════ -->
   <div id="intro-overlay" aria-label="School brand introduction" role="presentation" data-phase="darkness">
 
-    <!-- Ambient radial glow — expands as flames ignite -->
-    <div class="intro-bg-ambient" aria-hidden="true"></div>
+    <!-- ── Background atmosphere (5 layers) ── -->
+    <div class="intro-layer-navy"    aria-hidden="true"></div>
+    <div class="intro-layer-glow"    aria-hidden="true"></div>
+    <div class="intro-bg-ambient"    aria-hidden="true"></div>
+    <div class="intro-candles-glow"  aria-hidden="true"></div>
+    <div class="intro-vignette"      aria-hidden="true"></div>
 
-    <!-- Canvas particle system — very subtle light motes drifting upward -->
+    <!-- ── Golden dust particles ── -->
     <canvas id="intro-particles" aria-hidden="true"></canvas>
 
-    <!-- Central stage — all animated elements -->
+    <!-- ══ Scene composition ══ -->
     <div class="intro-center-stage">
 
-      <!-- Logo wrap containing both SVG candles and circular woodcut image -->
+      <!-- Hero: the candle logo (morphs into navbar logo at the end) -->
       <div class="intro-logo-wrap">
-        <!-- The woodcut background image — fades in during the transition -->
+
+        <!-- Woodcut image — revealed only during transformation -->
         <div class="intro-logo-bg-image" aria-hidden="true">
-          <img
-            src="assets/images/school_logo.jpg"
-            alt=""
-            class="intro-logo-img"
-          />
+          <img src="assets/images/school_logo.jpg" alt="" class="intro-logo-img"/>
         </div>
 
-        <!-- SVG Candle Group — precisely matching the logo arrangement -->
+        <!-- ══ SVG Candle Group ══
+             viewBox extended to 320×260 to include floor glow below candles.
+             Candles positioned at the same SVG coordinates (x centers: 54, 92, 130, 168, 212)
+             so the logo morphing math remains correct.                          -->
         <div class="intro-candles-wrap" aria-hidden="true">
           <svg
             class="intro-candles-svg"
-            viewBox="0 0 320 220"
+            viewBox="-33 0 320 260"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
           >
             <defs>
-              <!-- Realistic flame glow filter -->
-              <filter id="flame-glow-filter" x="-80%" y="-80%" width="260%" height="260%">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur1"/>
-                <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur2"/>
+              <!-- ── Filters ── -->
+              <filter id="flame-glow-filter" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2.8" result="b1"/>
+                <feGaussianBlur in="SourceGraphic" stdDeviation="7"   result="b2"/>
                 <feMerge>
-                  <feMergeNode in="blur2"/>
-                  <feMergeNode in="blur1"/>
+                  <feMergeNode in="b2"/>
+                  <feMergeNode in="b1"/>
                   <feMergeNode in="SourceGraphic"/>
                 </feMerge>
               </filter>
-              <!-- Inner bright core filter -->
-              <filter id="flame-core-filter" x="-40%" y="-40%" width="180%" height="180%">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+              <filter id="flame-core-filter" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0.9"/>
               </filter>
-              <!-- Outer flame gradient: warm golden-orange -->
-              <radialGradient id="flame-outer-grad" cx="50%" cy="80%" r="50%" fx="50%" fy="85%">
-                <stop offset="0%"   stop-color="#fff6cc" stop-opacity="0.95"/>
-                <stop offset="25%"  stop-color="#ffb732" stop-opacity="0.9"/>
-                <stop offset="65%"  stop-color="#ff7b00" stop-opacity="0.6"/>
-                <stop offset="100%" stop-color="#cc3300" stop-opacity="0"/>
+              <filter id="floor-blur-filter" x="-30%" y="-50%" width="160%" height="300%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="5"/>
+              </filter>
+
+              <!-- ── Flame gradients ── -->
+              <radialGradient id="flame-outer-grad" cx="50%" cy="76%" r="54%" fx="50%" fy="88%">
+                <stop offset="0%"   stop-color="#fffbea" stop-opacity="1"/>
+                <stop offset="18%"  stop-color="#ffc840" stop-opacity="0.96"/>
+                <stop offset="55%"  stop-color="#ff8200" stop-opacity="0.52"/>
+                <stop offset="100%" stop-color="#cc2800" stop-opacity="0"/>
               </radialGradient>
-              <!-- Inner core gradient: white hot center -->
-              <radialGradient id="flame-inner-grad" cx="50%" cy="85%" r="35%" fx="50%" fy="90%">
+              <radialGradient id="flame-inner-grad" cx="50%" cy="82%" r="38%" fx="50%" fy="92%">
                 <stop offset="0%"   stop-color="#ffffff" stop-opacity="1"/>
-                <stop offset="50%"  stop-color="#ffea99" stop-opacity="0.95"/>
-                <stop offset="100%" stop-color="#ffb732" stop-opacity="0"/>
+                <stop offset="38%"  stop-color="#fff4c0" stop-opacity="0.97"/>
+                <stop offset="100%" stop-color="#ffc240" stop-opacity="0"/>
               </radialGradient>
+
+              <!-- ── Wax gradients ── -->
+              <!-- Ivory wax cylinder: deep shadow edges, luminous highlight center -->
+              <linearGradient id="candle-wax-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%"   stop-color="#6e6456"/>
+                <stop offset="12%"  stop-color="#b8b0a2"/>
+                <stop offset="30%"  stop-color="#e6e0d3"/>
+                <stop offset="50%"  stop-color="#f2ede3"/>
+                <stop offset="70%"  stop-color="#e8e2d6"/>
+                <stop offset="88%"  stop-color="#b5aca0"/>
+                <stop offset="100%" stop-color="#6e6456"/>
+              </linearGradient>
+              <!-- Melted wax top cap -->
+              <radialGradient id="candle-top-grad" cx="50%" cy="35%" r="65%">
+                <stop offset="0%"   stop-color="#eae4d8"/>
+                <stop offset="60%"  stop-color="#c8c0b0"/>
+                <stop offset="100%" stop-color="#9e9588"/>
+              </radialGradient>
+              <!-- Warm candlelight reflected on wax surface -->
+              <linearGradient id="candle-warm-reflect" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%"   stop-color="#ffbe50" stop-opacity="0.72"/>
+                <stop offset="28%"  stop-color="#ff9010" stop-opacity="0.30"/>
+                <stop offset="100%" stop-color="#ff6000" stop-opacity="0"/>
+              </linearGradient>
+              <!-- Downward shadow at base -->
+              <linearGradient id="candle-shadow-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%"   stop-color="#04101e" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#04101e" stop-opacity="0.42"/>
+              </linearGradient>
+
+              <!-- ── Floor reflection gradient ── -->
+              <radialGradient id="floor-glow-grad" cx="50%" cy="0%" r="65%" fy="-10%">
+                <stop offset="0%"   stop-color="#e8a820" stop-opacity="0.10"/>
+                <stop offset="55%"  stop-color="#b07818" stop-opacity="0.04"/>
+                <stop offset="100%" stop-color="#804800" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="floor-fade-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%"   stop-color="#c89030" stop-opacity="0.07"/>
+                <stop offset="100%" stop-color="#c89030" stop-opacity="0"/>
+              </linearGradient>
             </defs>
 
-            <!-- Candle 1 (Far Left, Vertical) -->
+            <!-- ═══ Candle 1 — Far Left ═══ -->
             <g class="candle-g candle-1">
-              <rect class="candle-silhouette" x="52" y="85" width="16" height="65" rx="1.5" fill="#0c182b" />
-              <line class="candle-wick" x1="60" y1="85" x2="60" y2="76" stroke="#1d2d44" stroke-width="2" stroke-linecap="round" />
-              <!-- Flame Group -->
-              <g class="flame-g" style="transform-origin: 60px 76px;">
-                <path class="flame-outer" d="M 60 76 C 54 68, 50 60, 60 50 C 70 60, 66 68, 60 76 Z" fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)" />
-                <path class="flame-inner" d="M 60 76 C 56 71, 54 65, 60 58 C 66 65, 64 71, 60 76 Z" fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)" />
+              <path class="candle-body-base"
+                d="M 46 155 L 46 92 Q 46 86 54 86.5 Q 62 86 62 92 L 62 155 Q 62 157.5 54 157.5 Q 46 157.5 46 155 Z"
+                fill="url(#candle-wax-grad)" stroke="rgba(10,20,45,0.14)" stroke-width="0.5"/>
+              <ellipse class="candle-top" cx="54" cy="90.5" rx="8" ry="5"
+                fill="url(#candle-top-grad)" stroke="rgba(10,20,45,0.09)" stroke-width="0.4"/>
+              <path d="M 46 135 L 46 155 Q 46 157.5 54 157.5 Q 62 157.5 62 155 L 62 135 Z"
+                fill="url(#candle-shadow-grad)"/>
+              <path class="candle-reflection"
+                d="M 46 120 L 46 92 Q 46 86 54 86.5 Q 62 86 62 92 L 62 120 Z"
+                fill="url(#candle-warm-reflect)"/>
+              <path class="candle-wick" d="M 54 87.5 Q 53.3 82.5 52.6 77"
+                stroke="#141414" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+              <g class="flame-g" style="transform-origin: 52.6px 77px;">
+                <path class="flame-outer"
+                  d="M 52.6 77 C 45.5 67.5 40.5 57 52.6 45 C 64.5 57 59.5 67.5 52.6 77 Z"
+                  fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)"/>
+                <path class="flame-inner"
+                  d="M 52.6 77 C 48 71 45.8 64 52.6 55.5 C 59.2 64 57 71 52.6 77 Z"
+                  fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)"/>
               </g>
             </g>
 
-            <!-- Candle 2 (Vertical) -->
+            <!-- ═══ Candle 2 ═══ -->
             <g class="candle-g candle-2">
-              <rect class="candle-silhouette" x="87" y="85" width="16" height="65" rx="1.5" fill="#0c182b" />
-              <line class="candle-wick" x1="95" y1="85" x2="95" y2="76" stroke="#1d2d44" stroke-width="2" stroke-linecap="round" />
-              <!-- Flame Group -->
-              <g class="flame-g" style="transform-origin: 95px 76px;">
-                <path class="flame-outer" d="M 95 76 C 89 68, 85 60, 95 50 C 105 60, 101 68, 95 76 Z" fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)" />
-                <path class="flame-inner" d="M 95 76 C 91 71, 89 65, 95 58 C 101 65, 99 71, 95 76 Z" fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)" />
+              <path class="candle-body-base"
+                d="M 84 155 L 84 92 Q 84 86 92 86.5 Q 100 86 100 92 L 100 155 Q 100 157.5 92 157.5 Q 84 157.5 84 155 Z"
+                fill="url(#candle-wax-grad)" stroke="rgba(10,20,45,0.14)" stroke-width="0.5"/>
+              <ellipse class="candle-top" cx="92" cy="90.5" rx="8" ry="5"
+                fill="url(#candle-top-grad)" stroke="rgba(10,20,45,0.09)" stroke-width="0.4"/>
+              <path d="M 84 135 L 84 155 Q 84 157.5 92 157.5 Q 100 157.5 100 155 L 100 135 Z"
+                fill="url(#candle-shadow-grad)"/>
+              <path class="candle-reflection"
+                d="M 84 120 L 84 92 Q 84 86 92 86.5 Q 100 86 100 92 L 100 120 Z"
+                fill="url(#candle-warm-reflect)"/>
+              <path class="candle-wick" d="M 92 87.5 Q 91.2 82.5 90.4 77"
+                stroke="#141414" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+              <g class="flame-g" style="transform-origin: 90.4px 77px;">
+                <path class="flame-outer"
+                  d="M 90.4 77 C 83.3 67.5 78.3 57 90.4 45 C 102.3 57 97.3 67.5 90.4 77 Z"
+                  fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)"/>
+                <path class="flame-inner"
+                  d="M 90.4 77 C 85.8 71 83.6 64 90.4 55.5 C 97 64 94.8 71 90.4 77 Z"
+                  fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)"/>
               </g>
             </g>
 
-            <!-- Candle 3 (Vertical) -->
+            <!-- ═══ Candle 3 — Center ═══ -->
             <g class="candle-g candle-3">
-              <rect class="candle-silhouette" x="122" y="85" width="16" height="65" rx="1.5" fill="#0c182b" />
-              <line class="candle-wick" x1="130" y1="85" x2="130" y2="76" stroke="#1d2d44" stroke-width="2" stroke-linecap="round" />
-              <!-- Flame Group -->
-              <g class="flame-g" style="transform-origin: 130px 76px;">
-                <path class="flame-outer" d="M 130 76 C 124 68, 120 60, 130 50 C 140 60, 136 68, 130 76 Z" fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)" />
-                <path class="flame-inner" d="M 130 76 C 126 71, 124 65, 130 58 C 136 65, 134 71, 130 76 Z" fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)" />
+              <path class="candle-body-base"
+                d="M 122 155 L 122 92 Q 122 86 130 86.5 Q 138 86 138 92 L 138 155 Q 138 157.5 130 157.5 Q 122 157.5 122 155 Z"
+                fill="url(#candle-wax-grad)" stroke="rgba(10,20,45,0.14)" stroke-width="0.5"/>
+              <ellipse class="candle-top" cx="130" cy="90.5" rx="8" ry="5"
+                fill="url(#candle-top-grad)" stroke="rgba(10,20,45,0.09)" stroke-width="0.4"/>
+              <path d="M 122 135 L 122 155 Q 122 157.5 130 157.5 Q 138 157.5 138 155 L 138 135 Z"
+                fill="url(#candle-shadow-grad)"/>
+              <path class="candle-reflection"
+                d="M 122 120 L 122 92 Q 122 86 130 86.5 Q 138 86 138 92 L 138 120 Z"
+                fill="url(#candle-warm-reflect)"/>
+              <path class="candle-wick" d="M 130 87.5 Q 129.2 82.5 128.4 77"
+                stroke="#141414" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+              <g class="flame-g" style="transform-origin: 128.4px 77px;">
+                <path class="flame-outer"
+                  d="M 128.4 77 C 121.3 67.5 116.3 57 128.4 45 C 140.3 57 135.3 67.5 128.4 77 Z"
+                  fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)"/>
+                <path class="flame-inner"
+                  d="M 128.4 77 C 123.8 71 121.6 64 128.4 55.5 C 135 64 132.8 71 128.4 77 Z"
+                  fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)"/>
               </g>
             </g>
 
-            <!-- Candle 4 (Vertical) -->
+            <!-- ═══ Candle 4 ═══ -->
             <g class="candle-g candle-4">
-              <rect class="candle-silhouette" x="157" y="85" width="16" height="65" rx="1.5" fill="#0c182b" />
-              <line class="candle-wick" x1="165" y1="85" x2="165" y2="76" stroke="#1d2d44" stroke-width="2" stroke-linecap="round" />
-              <!-- Flame Group -->
-              <g class="flame-g" style="transform-origin: 165px 76px;">
-                <path class="flame-outer" d="M 165 76 C 159 68, 155 60, 165 50 C 175 60, 171 68, 165 76 Z" fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)" />
-                <path class="flame-inner" d="M 165 76 C 161 71, 159 65, 165 58 C 171 65, 169 71, 165 76 Z" fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)" />
+              <path class="candle-body-base"
+                d="M 160 155 L 160 92 Q 160 86 168 86.5 Q 176 86 176 92 L 176 155 Q 176 157.5 168 157.5 Q 160 157.5 160 155 Z"
+                fill="url(#candle-wax-grad)" stroke="rgba(10,20,45,0.14)" stroke-width="0.5"/>
+              <ellipse class="candle-top" cx="168" cy="90.5" rx="8" ry="5"
+                fill="url(#candle-top-grad)" stroke="rgba(10,20,45,0.09)" stroke-width="0.4"/>
+              <path d="M 160 135 L 160 155 Q 160 157.5 168 157.5 Q 176 157.5 176 155 L 176 135 Z"
+                fill="url(#candle-shadow-grad)"/>
+              <path class="candle-reflection"
+                d="M 160 120 L 160 92 Q 160 86 168 86.5 Q 176 86 176 92 L 176 120 Z"
+                fill="url(#candle-warm-reflect)"/>
+              <path class="candle-wick" d="M 168 87.5 Q 167.2 82.5 166.4 77"
+                stroke="#141414" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+              <g class="flame-g" style="transform-origin: 166.4px 77px;">
+                <path class="flame-outer"
+                  d="M 166.4 77 C 159.3 67.5 154.3 57 166.4 45 C 178.3 57 173.3 67.5 166.4 77 Z"
+                  fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)"/>
+                <path class="flame-inner"
+                  d="M 166.4 77 C 161.8 71 159.6 64 166.4 55.5 C 173 64 170.8 71 166.4 77 Z"
+                  fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)"/>
               </g>
             </g>
 
-            <!-- Candle 5 (Diagonal, tilted left, leaning down-right) -->
-            <g class="candle-g candle-5" style="transform-origin: 205px 150px;">
-              <rect class="candle-silhouette" x="197" y="85" width="16" height="65" rx="1.5" fill="#0c182b" />
-              <line class="candle-wick" x1="205" y1="85" x2="205" y2="76" stroke="#1d2d44" stroke-width="2" stroke-linecap="round" />
-              <!-- Flame Group -->
-              <g class="flame-g" style="transform-origin: 205px 76px;">
-                <path class="flame-outer" d="M 205 76 C 199 68, 195 60, 205 50 C 215 60, 211 68, 205 76 Z" fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)" />
-                <path class="flame-inner" d="M 205 76 C 201 71, 199 65, 205 58 C 211 65, 209 71, 205 76 Z" fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)" />
+            <!-- ═══ Candle 5 — Diagonal Source Flame ═══ -->
+            <g class="candle-g candle-5" style="transform-origin: 212px 155px;">
+              <path class="candle-body-base"
+                d="M 204 155 L 204 92 Q 204 86 212 86.5 Q 220 86 220 92 L 220 155 Q 220 157.5 212 157.5 Q 204 157.5 204 155 Z"
+                fill="url(#candle-wax-grad)" stroke="rgba(10,20,45,0.14)" stroke-width="0.5"/>
+              <ellipse class="candle-top" cx="212" cy="90.5" rx="8" ry="5"
+                fill="url(#candle-top-grad)" stroke="rgba(10,20,45,0.09)" stroke-width="0.4"/>
+              <path d="M 204 135 L 204 155 Q 204 157.5 212 157.5 Q 220 157.5 220 155 L 220 135 Z"
+                fill="url(#candle-shadow-grad)"/>
+              <path class="candle-reflection"
+                d="M 204 120 L 204 92 Q 204 86 212 86.5 Q 220 86 220 92 L 220 120 Z"
+                fill="url(#candle-warm-reflect)"/>
+              <path class="candle-wick" d="M 212 87.5 Q 211.2 82.5 210.4 77"
+                stroke="#141414" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+              <g class="flame-g" style="transform-origin: 210.4px 77px;">
+                <path class="flame-outer"
+                  d="M 210.4 77 C 203.3 67.5 198.3 57 210.4 45 C 222.3 57 217.3 67.5 210.4 77 Z"
+                  fill="url(#flame-outer-grad)" filter="url(#flame-glow-filter)"/>
+                <path class="flame-inner"
+                  d="M 210.4 77 C 205.8 71 203.6 64 210.4 55.5 C 217 64 214.8 71 210.4 77 Z"
+                  fill="url(#flame-inner-grad)" filter="url(#flame-core-filter)"/>
               </g>
+            </g>
+
+            <!-- ═══ Floor: warm light pooling beneath the candles ═══ -->
+            <g class="floor-scene">
+              <!-- Soft elliptical floor glow — driven by JS opacity -->
+              <ellipse class="floor-glow-main" cx="133" cy="164" rx="108" ry="10"
+                fill="url(#floor-glow-grad)" filter="url(#floor-blur-filter)"/>
+              <!-- Individual candle base hotspots -->
+              <ellipse class="floor-spot" cx="54"  cy="161" rx="10" ry="3.5" fill="rgba(220,150,40,0.06)"/>
+              <ellipse class="floor-spot" cx="92"  cy="161" rx="10" ry="3.5" fill="rgba(220,150,40,0.06)"/>
+              <ellipse class="floor-spot" cx="130" cy="161" rx="10" ry="3.5" fill="rgba(220,150,40,0.06)"/>
+              <ellipse class="floor-spot" cx="168" cy="161" rx="10" ry="3.5" fill="rgba(220,150,40,0.06)"/>
+              <ellipse class="floor-spot" cx="212" cy="161" rx="10" ry="3.5" fill="rgba(220,150,40,0.06)"/>
+              <!-- Descending fade band -->
+              <rect x="20" y="162" width="280" height="65"
+                fill="url(#floor-fade-grad)" filter="url(#floor-blur-filter)"/>
             </g>
           </svg>
         </div>
-      </div>
+      </div><!-- /.intro-logo-wrap -->
 
-      <!-- Text group holding the Urdu motto and scroll indicators -->
+      <!-- ── Text hierarchy ── -->
       <div class="intro-text-group">
-        <div class="intro-motto">
+
+        <!-- Urdu motto — starts invisible, revealed by candlelight via JS -->
+        <div class="intro-motto" aria-label="Charagh se charagh jalta hai">
           چراغ سے چراغ جلتا ہے
         </div>
+
+        <!-- Decorative divider -->
+        <div class="intro-divider" aria-hidden="true">
+          <span class="intro-divider-line"></span>
+          <span class="intro-divider-ornament">✦</span>
+          <span class="intro-divider-line"></span>
+        </div>
+
+        <!-- English secondary line -->
         <div class="intro-instruction">
-          Knowledge begins with a single light.
+          Knowledge begins with one light and spreads to many.
         </div>
-        <div class="intro-scroll-prompt">
-          Scroll to continue the journey
+
+        <!-- Scroll indicator — adaptive per device -->
+        <div class="intro-scroll-block" aria-hidden="true">
+          <!-- Mouse icon — shown on tablet/desktop -->
+          <div class="intro-mouse-indicator">
+            <div class="intro-mouse-wheel"></div>
+          </div>
+          <!-- Swipe hint — shown on phones -->
+          <div class="intro-swipe-hint">
+            <span class="intro-swipe-hint-icon">↓</span>
+            <span class="intro-swipe-hint-text">Swipe up</span>
+          </div>
         </div>
-        <div class="intro-mouse-indicator" aria-hidden="true">
-          <div class="intro-mouse-wheel"></div>
-        </div>
-      </div>
+
+      </div><!-- /.intro-text-group -->
 
     </div><!-- /.intro-center-stage -->
 
-    <!-- Skip hint -->
-    <span
-      id="intro-skip"
-      class="intro-skip-hint"
-      role="button"
-      tabindex="0"
-      aria-label="Skip introduction"
-    >
-      Tap anywhere to continue
-    </span>
   </div>
+
+
   
   <!-- Prologue Scroll Spacer — only active when intro is running -->
   <div id="prologue-spacer" aria-hidden="true"></div>
@@ -283,7 +421,7 @@
     <!-- Mobile Overlay -->
     <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
 
-    <!-- Mobile Drawer -->
+    <!-- Mobile Drawer — Full Screen Premium -->
     <nav
       class="nav-drawer"
       id="nav-drawer"
@@ -291,13 +429,51 @@
       aria-hidden="true"
       role="navigation"
     >
-      <a href="#hero"         class="nav-link">Home</a>
-      <a href="#why-choose"   class="nav-link">About</a>
-      <a href="#vision"       class="nav-link">Academics</a>
-      <a href="#principal"    class="nav-link">Faculty</a>
-      <a href="#admissions-cta" class="nav-link">Admissions</a>
-      <a href="#footer"       class="nav-link">Contact</a>
-      <a href="#admissions-cta" class="nav-cta" style="margin-top:24px;">Admissions Open</a>
+      <div class="nav-drawer-inner">
+
+        <!-- Drawer header: branding + close -->
+        <div class="nav-drawer-header">
+          <a href="#" class="nav-drawer-logo" aria-label="Home">
+            <img
+              src="assets/images/school_logo.jpg"
+              alt=""
+              class="nav-drawer-logo-icon"
+              aria-hidden="true"
+            />
+            <span class="nav-drawer-school-name">Ashraf Islamia<br>Model Public SS</span>
+          </a>
+          <button
+            class="nav-drawer-close"
+            id="nav-drawer-close"
+            aria-label="Close navigation menu"
+            type="button"
+          >&times;</button>
+        </div>
+
+        <!-- Navigation links -->
+        <div class="nav-drawer-links">
+          <a href="#hero"           class="nav-link" tabindex="-1">Home <span class="nav-link-arrow">›</span></a>
+          <a href="#why-choose"     class="nav-link" tabindex="-1">About <span class="nav-link-arrow">›</span></a>
+          <a href="#vision"         class="nav-link" tabindex="-1">Academics <span class="nav-link-arrow">›</span></a>
+          <a href="#principal"      class="nav-link" tabindex="-1">Faculty <span class="nav-link-arrow">›</span></a>
+          <a href="#admissions-cta" class="nav-link" tabindex="-1">Admissions <span class="nav-link-arrow">›</span></a>
+          <a href="#footer"         class="nav-link" tabindex="-1">Contact <span class="nav-link-arrow">›</span></a>
+        </div>
+
+        <!-- CTA button at bottom -->
+        <div class="nav-drawer-cta-wrap">
+          <a href="#admissions-cta" class="nav-cta" tabindex="-1">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Admissions Open
+          </a>
+        </div>
+
+      </div>
     </nav>
   </header>
 

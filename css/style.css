@@ -55,10 +55,10 @@
   --font-body:      'Inter', system-ui, sans-serif;
 
   /* Spacing */
-  --section-py:     100px;
-  --section-py-sm:  60px;
+  --section-py:     clamp(50px, 8vw, 100px);
+  --section-py-sm:  clamp(35px, 5vw, 60px);
   --container-max:  1200px;
-  --container-px:   clamp(20px, 5vw, 60px);
+  --container-px:   clamp(16px, 4vw, 48px);
 
   /* Transitions */
   --ease-smooth:    cubic-bezier(0.22, 1, 0.36, 1);
@@ -80,6 +80,9 @@ html {
   scroll-behavior: smooth;
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+  /* Prevent any horizontal bleed on any viewport */
+  max-width: 100vw;
 }
 
 body {
@@ -276,15 +279,15 @@ body.prologue-active {
 
 body.prologue-active #prologue-spacer {
   display: block;
-  height: 1350px; /* Gives generous scrolling range */
+  height: 100vh;
 }
 
-/* Base Overlay */
+/* ── Base Overlay ── */
 #intro-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: #02050d; /* Premium deep navy-black */
+  background: #01040a;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -295,65 +298,115 @@ body.prologue-active #prologue-spacer {
   transform: translateZ(0);
 }
 
-/* Subtle background overlay */
-#intro-overlay::before {
-  content: '';
+/* Smooth fade out on .fade-out class */
+#intro-overlay.fade-out {
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Layer 1: Deep Navy Base (implicit via background in #intro-overlay/intro-layer-navy) */
+.intro-layer-navy {
+  position: absolute;
+  inset: 0;
+  background-color: #01040a;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Layer 2: Dark Charcoal Gradient */
+.intro-layer-glow {
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    circle at 50% 50%,
-    rgba(15, 23, 42, 0.25) 0%,
-    transparent 100%
+    circle at 50% 42%,
+    rgba(15, 18, 24, 0.6) 0%,
+    #010307 100%
   );
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
-/* Ambient Radial Glow — expands with candlelight */
+/* Layer 3: Ambient Radial Glow */
 .intro-bg-ambient {
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    circle at 50% 50%,
-    rgba(224, 151, 26, 0.16) 0%,
+    circle at 50% 42%,
+    rgba(224, 151, 26, 0.18) 0%,
     rgba(201, 168, 76, 0.05) 45%,
     transparent 70%
   );
   opacity: 0;
-  transform: scale(0.6);
+  transform: scale(0.7);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
   will-change: opacity, transform;
-  transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-/* Particles Canvas */
+/* Layer 3: Warm illumination behind candles */
+.intro-candles-glow {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 480px;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(230, 155, 28, 0.22) 0%,
+    rgba(200, 140, 40, 0.06) 42%,
+    transparent 72%
+  );
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.15;
+  will-change: opacity;
+  transition: opacity 0.12s ease;
+}
+
+/* Layer 4: Vignette (Edges) */
+.intro-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 45%,
+    rgba(0, 1, 4, 0.72) 75%,
+    #000103 100%
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Layer 5: Barely-visible Golden Dust particles */
 #intro-particles {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
   opacity: 0;
   transition: opacity 0.8s ease;
 }
 
-/* Central Stage */
+/* ── Central Stage ── */
 .intro-center-stage {
   position: relative;
-  z-index: 3;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0;
+  transform: translateY(-2vh); /* Visual center balancing */
 }
 
-/* Logo Wrap — container for candles and woodcut background */
+/* ── Logo Wrap ── */
 .intro-logo-wrap {
-  width: 240px;
-  height: 240px;
+  width: min(240px, 60vw);
+  height: min(240px, 60vw);
   border-radius: 50%;
   position: relative;
   display: flex;
@@ -363,25 +416,24 @@ body.prologue-active #prologue-spacer {
   border: 2px solid rgba(201, 168, 76, 0);
   box-shadow: none;
   will-change: transform, opacity, border-color, background-color, box-shadow;
-  transition: 
-    border-color 0.8s ease, 
-    background-color 0.8s ease, 
+  transition:
+    border-color 0.8s ease,
+    background-color 0.8s ease,
     box-shadow 0.8s ease,
     transform 0.8s cubic-bezier(0.25, 1, 0.5, 1),
     opacity 0.8s ease;
 }
 
-/* Activated State — when the woodcut bg image fades in */
 .intro-logo-wrap.show-bg {
-  border-color: rgba(201, 168, 76, 0.8);
+  border-color: rgba(201, 168, 76, 0.75);
   background-color: #030611;
-  box-shadow: 
-    0 0 0 5px rgba(201, 168, 76, 0.12),
-    0 0 30px rgba(201, 168, 76, 0.35),
-    0 0 70px rgba(201, 168, 76, 0.15);
+  box-shadow:
+    0 0 0 4px rgba(201, 168, 76, 0.10),
+    0 0 28px rgba(201, 168, 76, 0.28),
+    0 0 65px rgba(201, 168, 76, 0.12);
 }
 
-/* Logo Woodcut background image */
+/* ── Logo woodcut bg ── */
 .intro-logo-bg-image {
   position: absolute;
   inset: 0;
@@ -399,20 +451,18 @@ body.prologue-active #prologue-spacer {
   display: block;
 }
 
-/* Show the bg image */
 .intro-logo-wrap.show-bg .intro-logo-bg-image {
-  opacity: 0.95; /* Fades in subtly behind the candles */
+  opacity: 0.95;
 }
 
-/* SVG Candles Layout Wrapper */
+/* ── SVG Candle Wrapper ── */
 .intro-candles-wrap {
   position: absolute;
-  width: 320px;
-  height: 220px;
+  width: calc(min(240px, 60vw) * 1.6);
+  height: calc(min(240px, 60vw) * 1.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: scale(0.9);
   z-index: 10;
   pointer-events: none;
   will-change: transform, opacity;
@@ -425,36 +475,54 @@ body.prologue-active #prologue-spacer {
   overflow: visible;
 }
 
-/* Candle Group Base Styles */
+/* ── Candle groups ── */
 .candle-g {
-  opacity: 1; /* Always visible in the scroll-driven prologue */
+  opacity: 1;
   will-change: opacity, transform;
 }
 
-/* Soft ivory coloured wax with subtle shadows */
-.candle-silhouette {
-  fill: #eae6d8;
-  stroke: rgba(26, 58, 92, 0.12);
-  stroke-width: 0.75;
+.candle-body-base {
   transition: fill 0.8s ease;
 }
 
-.candle-wick {
-  stroke: #2d2d2d;
-  stroke-linecap: round;
+/* ── Floor reflection (V3 Grounding) ── */
+.floor-scene {
+  opacity: 0.05; /* soft 5% grounding */
+  will-change: opacity;
+  transition: opacity 0.6s ease;
 }
 
-/* Flame Styles */
+.floor-glow-main {
+  transform-origin: 133px 164px;
+  mix-blend-mode: screen;
+}
+
+.floor-spot {
+  mix-blend-mode: screen;
+}
+
+/* Warm reflection overlay — visible only when lit */
+.candle-reflection {
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 0.7s ease;
+  pointer-events: none;
+}
+
+.candle-g.lit .candle-reflection {
+  opacity: 0.8;
+}
+
+/* ── Flame groups ── */
 .flame-g {
   opacity: 0;
   transform: scale(0);
   will-change: transform, opacity;
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
+  /* transitions handled by JS inline styles for scroll precision */
 }
 
-/* When igniting/lit */
 .candle-g.igniting .flame-g {
-  opacity: 0.7;
+  opacity: 0.65;
   transform: scale(0.5);
 }
 
@@ -463,91 +531,118 @@ body.prologue-active #prologue-spacer {
   transform: scale(1);
 }
 
-/* Candle 5 base rotation (diagonal, tilted left) */
+/* Candle 5 — diagonal, tilted left */
 .candle-5 {
   transform: rotate(-32deg);
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-/* Leaning animations for lighting process */
-.candle-5.leaning {
-  transform: rotate(-46deg); /* Leans closer to Candle 4 */
-}
-
-/* Flame leaning for the vertical candles */
-.candle-4.leaning .flame-g {
-  transform: rotate(-28deg) scaleX(1.25) translateX(-4px);
-}
-
-.candle-3.leaning .flame-g {
-  transform: rotate(-28deg) scaleX(1.25) translateX(-4px);
-}
-
-.candle-2.leaning .flame-g {
-  transform: rotate(-28deg) scaleX(1.25) translateX(-4px);
-}
-
-/* Active Glow Animations */
+/* ── Flame flicker animations ── */
 .candle-g.lit .flame-outer {
-  animation: flame-flicker-outer 2.4s ease-in-out infinite;
+  animation: flame-flicker-outer var(--flame-outer-dur, 2.4s) ease-in-out var(--flame-outer-delay, 0s) infinite;
 }
 
 .candle-g.lit .flame-inner {
-  animation: flame-flicker-inner 1.6s ease-in-out infinite;
+  animation: flame-flicker-inner var(--flame-inner-dur, 1.6s) ease-in-out var(--flame-inner-delay, 0s) infinite;
 }
 
-/* Motto Text (Urdu) - Appears immediately */
+/* Unique unsynchronised flicker timing per candle */
+.candle-1 { --flame-outer-dur: 2.05s; --flame-outer-delay: -0.3s;  --flame-inner-dur: 1.35s; --flame-inner-delay: -0.6s; }
+.candle-2 { --flame-outer-dur: 2.65s; --flame-outer-delay: -1.1s;  --flame-inner-dur: 1.75s; --flame-inner-delay: -0.25s; }
+.candle-3 { --flame-outer-dur: 2.25s; --flame-outer-delay: -1.55s; --flame-inner-dur: 1.55s; --flame-inner-delay: -0.9s; }
+.candle-4 { --flame-outer-dur: 2.85s; --flame-outer-delay: -0.5s;  --flame-inner-dur: 1.9s;  --flame-inner-delay: -1.35s; }
+.candle-5 { --flame-outer-dur: 2.45s; --flame-outer-delay: -1.9s;  --flame-inner-dur: 1.62s; --flame-inner-delay: -0.15s; }
+
+/* ── Text Group ── */
+.intro-text-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  will-change: opacity, transform;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+/* 1 — Urdu Motto */
 .intro-motto {
   font-family: 'Noto Nastaliq Urdu', 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(1.3rem, 3.5vw, 2.0rem);
+  font-size: clamp(1.35rem, 3.4vw, 2.05rem);
   font-weight: 400;
-  color: #f7ce68; /* Premium gold color */
-  text-shadow: 0 0 15px rgba(247, 206, 104, 0.25);
-  margin-top: 30px;
+  color: var(--gold);
+  /* Refined glow — subtle warmth, not a bloom */
+  text-shadow:
+    0 0 8px rgba(201, 168, 76, 0.12),
+    0 2px 12px rgba(201, 168, 76, 0.08);
+  margin-top: 28px;
+  letter-spacing: 0.04em;
   direction: rtl;
   text-align: center;
+  line-height: 1.55;
   opacity: 1;
-  transform: translateY(0);
   will-change: opacity, transform;
-  transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
-/* Minimal Instruction and Prompt */
+/* 2 — Decorative divider */
+.intro-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 12px;
+  width: 240px;
+}
+
+.intro-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(201, 168, 76, 0.55),
+    transparent
+  );
+}
+
+.intro-divider-ornament {
+  font-size: 0.6rem;
+  color: rgba(201, 168, 76, 0.75);
+  letter-spacing: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* 3 — English quote */
 .intro-instruction {
-  font-family: var(--font-accent);
-  font-size: clamp(0.9rem, 1.8vw, 1.1rem);
-  font-style: italic;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.85);
-  margin-top: 20px;
-  letter-spacing: 0.05em;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.95rem, 2vw, 1.35rem);
+  font-weight: 500;
+  color: #eae4d8;
+  text-align: center;
+  letter-spacing: 0.035em;
+  line-height: 1.6;
+  max-width: 480px;
   opacity: 1;
   transition: opacity 0.5s ease;
 }
 
-.intro-scroll-prompt {
-  font-family: var(--font-body);
-  font-size: clamp(0.7rem, 1.2vw, 0.75rem);
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.45);
-  margin-top: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
+/* 4 — Scroll indicator block */
+.intro-scroll-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 36px;
   opacity: 1;
   transition: opacity 0.5s ease;
 }
 
-/* Mouse Indicator */
+/* Mouse icon */
 .intro-mouse-indicator {
   width: 18px;
   height: 28px;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border: 1.5px solid rgba(201, 168, 76, 0.45);
   border-radius: 9px;
   position: relative;
-  margin-top: 14px;
-  opacity: 1;
-  transition: opacity 0.5s ease;
   display: inline-block;
+  animation: mouse-breath 3s ease-in-out infinite;
 }
 
 .intro-mouse-wheel {
@@ -559,82 +654,33 @@ body.prologue-active #prologue-spacer {
   top: 5px;
   left: 50%;
   transform: translateX(-50%);
-  animation: mouse-wheel-breath 2s ease-in-out infinite;
 }
 
-@keyframes mouse-wheel-breath {
-  0%, 100% {
-    opacity: 0.35;
-    transform: translate(-50%, 0) scaleY(0.85);
-  }
-  50% {
-    opacity: 1;
-    transform: translate(-50%, 3px) scaleY(1.15);
-  }
+@keyframes mouse-breath {
+  0%, 100% { opacity: 0.45; }
+  50%       { opacity: 1;    }
 }
 
-/* Skip Intro Hint */
-.intro-skip-hint {
-  position: absolute;
-  bottom: 32px;
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.25);
-  letter-spacing: 0.12em;
-  cursor: pointer;
-  z-index: 10;
-  transition: color 0.3s ease, opacity 0.3s ease;
-  user-select: none;
-}
+/* ── Phase-based display ── */
 
-.intro-skip-hint:hover {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-/* ── Phase-based Display controls ───────────────────────── */
-
-/* Ambient glow visibility */
-#intro-overlay[data-phase="lighting"] .intro-bg-ambient {
-  opacity: 0.75;
-  transform: scale(0.85);
+#intro-overlay[data-phase="lighting"] #intro-particles,
+#intro-overlay[data-phase="stable"]  #intro-particles {
+  opacity: 0.7;
 }
 
 #intro-overlay[data-phase="stable"] .intro-bg-ambient {
-  opacity: 1;
-  transform: scale(1);
-  animation: ambient-breathe 4s ease-in-out infinite;
+  animation: ambient-breathe 4.5s ease-in-out infinite;
 }
 
-/* Particles Canvas visibility */
-#intro-overlay[data-phase="lighting"] #intro-particles,
-#intro-overlay[data-phase="stable"] #intro-particles {
-  opacity: 0.8;
-}
-
-/* ── Phase: exiting ────────────────────────────────────── */
-
+/* ── Exiting phase ── */
 #intro-overlay[data-phase="exiting"] {
   pointer-events: none;
 }
 
-#intro-overlay[data-phase="exiting"] .intro-motto,
-#intro-overlay[data-phase="exiting"] .intro-instruction,
-#intro-overlay[data-phase="exiting"] .intro-scroll-prompt,
-#intro-overlay[data-phase="exiting"] .intro-mouse-indicator,
-#intro-overlay[data-phase="exiting"] .intro-skip-hint {
-  transition: opacity 0.4s ease, transform 0.4s ease;
+#intro-overlay[data-phase="exiting"] .intro-scroll-block {
   opacity: 0;
-  transform: translateY(-10px);
+  transition: opacity 0.35s ease;
 }
-
-#intro-overlay[data-phase="exiting"] .intro-candles-wrap {
-  /* Candles scale down slightly as logo scales down */
-  transform: scale(0.7);
-  opacity: 0;
-  transition: opacity 0.6s ease 0.2s, transform 0.8s ease;
-}
-
 
 /* ══════════════════════════════════════════════════════
    HERO SECTION — Post-Intro Cascade
@@ -709,11 +755,11 @@ body.intro-skip #hero .hero-scroll-hint {
   left: 0;
   right: 0;
   z-index: 1000;
-  padding: 20px var(--container-px);
+  /* padding set per breakpoint */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   /* Start invisible — JS controls reveal timing after intro */
   opacity: 0;
   transform: translateY(-100%);
@@ -730,7 +776,6 @@ body.intro-skip #navbar {
 }
 
 #navbar.scrolled {
-  padding: 12px var(--container-px);
   background: rgba(15, 35, 64, 0.97);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -906,6 +951,8 @@ body.intro-skip #navbar {
   flex-direction: column;
   gap: 8px;
   box-shadow: -8px 0 40px rgba(0,0,0,0.4);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nav-drawer.open {
@@ -948,11 +995,9 @@ body.intro-skip #navbar {
 
 #hero {
   position: relative;
-  height: 100svh;
-  min-height: 600px;
+  /* height/align-items set per breakpoint in responsive section */
   overflow: hidden;
   display: flex;
-  align-items: center;
 }
 
 /* Slideshow */
@@ -995,13 +1040,13 @@ body.intro-skip #navbar {
   position: relative;
   z-index: 2;
   max-width: var(--container-max);
-  padding-inline: var(--container-px);
+  /* padding-inline and padding-bottom set per breakpoint */
   margin-inline: auto;
   width: 100%;
 }
 
 .hero-inner {
-  max-width: 680px;
+  /* max-width, text-align, display set per breakpoint */
 }
 
 .hero-label {
@@ -1051,33 +1096,32 @@ body.intro-skip #navbar {
 .hero-ctas {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  /* flex-direction, gap, width set per breakpoint */
 }
 
 /* Slide indicators */
 .hero-indicators {
   position: absolute;
-  bottom: 36px;
+  /* bottom, gap set per breakpoint */
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
   display: flex;
-  gap: 10px;
 }
 
 .hero-dot {
-  width: 32px;
-  height: 3px;
+  /* width, height, padding set per breakpoint */
   border-radius: 2px;
   background: rgba(255,255,255,0.35);
   cursor: pointer;
   transition: background var(--t-fast), width var(--t-med) var(--ease-smooth);
   border: none;
+  min-width: 20px;
+  min-height: 20px; /* ensures tap target */
 }
 
 .hero-dot.active {
   background: var(--gold);
-  width: 48px;
 }
 
 /* Scroll indicator */
@@ -1127,7 +1171,7 @@ body.intro-skip #navbar {
 
 #stats {
   background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-  padding-block: 70px;
+  /* padding-block set per breakpoint */
   position: relative;
   overflow: hidden;
 }
@@ -1476,7 +1520,7 @@ body.intro-skip #navbar {
 
 #admissions-cta {
   background: var(--cream-dark);
-  padding-block: 80px;
+  /* padding-block set per breakpoint */
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -1746,114 +1790,1700 @@ body.intro-skip #navbar {
   top: 16px;
 }
 
-/* ─── RESPONSIVE ─────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE SYSTEM — Mobile-First, 8 Breakpoints
+   Built from scratch. Every breakpoint recalculates layout independently.
+   NO zoom, NO transform:scale(), NO shrinking.
 
-@media (max-width: 1024px) {
-  :root {
-    --section-py: 80px;
-  }
+   Breakpoint scale:
+     Base   280px+   Extra-small phones (Galaxy Fold, iPhone SE)
+     sm     360px+   Standard phones (Galaxy S, Pixel, Nothing)
+     md     480px+   Large phones (iPhone Plus/Pro Max, Samsung Ultra)
+     lg     768px+   Small tablets (iPad Mini, Galaxy Tab) — NAV SWITCH
+     xl     992px+   Large tablets (iPad Pro, Surface Go)
+     2xl    1200px+  Laptop
+     3xl    1440px+  Desktop
+     4k     1920px+  Large Desktop / 4K
+═══════════════════════════════════════════════════════════════════ */
 
-  .why-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 
-  .vision-grid {
-    grid-template-columns: 1fr;
-    gap: 48px;
-  }
+/* ───────────────────────────────────────────────────────
+   BASE STYLES — 280px and up (mobile-first foundation)
+   Everything here is designed FOR small phones, not
+   shrunk from desktop.
+─────────────────────────────────────────────────────── */
 
-  .vision-image-wrap img {
-    height: 380px;
-  }
-
-  .footer-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0;
-  }
-
-  .stat-item:nth-child(2)::after {
-    display: none;
-  }
-
-  .stat-item:nth-child(1),
-  .stat-item:nth-child(2) {
-    border-bottom: 1px solid rgba(255,255,255,0.12);
-  }
+/* ── Root tokens — base mobile ── */
+:root {
+  --container-px: 16px;
+  --section-py:   clamp(40px, 10vw, 56px);
+  --section-py-sm: clamp(28px, 7vw, 40px);
+  --container-max: 1200px;
 }
 
-@media (max-width: 768px) {
+/* ── Navbar — mobile base ── */
+#navbar {
+  padding: 14px var(--container-px);
+}
+
+.nav-menu,
+.nav-cta {
+  display: none;
+}
+
+.nav-hamburger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+}
+
+/* Logo — mobile */
+.nav-logo {
+  gap: 10px;
+}
+
+.nav-logo-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.nav-school-name {
+  font-size: 0.82rem;
+  max-width: 180px;
+  white-space: normal;
+  line-height: 1.3;
+}
+
+.nav-school-tagline {
+  display: none;
+}
+
+/* ── Mobile Drawer — Full Screen ── */
+.nav-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 22, 45, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 0;
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 9990;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nav-drawer.open {
+  transform: translateX(0);
+}
+
+/* Drawer inner layout */
+.nav-drawer-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 0 var(--container-px) 40px;
+}
+
+/* Drawer header — logo + close */
+.nav-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0 24px;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+  margin-bottom: 32px;
+  flex-shrink: 0;
+}
+
+.nav-drawer-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.nav-drawer-logo-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(201, 168, 76, 0.6);
+}
+
+.nav-drawer-school-name {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-white);
+  line-height: 1.25;
+  max-width: 160px;
+}
+
+.nav-drawer-close {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-white);
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.nav-drawer-close:hover {
+  background: rgba(201, 168, 76, 0.2);
+  color: var(--gold-light);
+}
+
+/* Drawer navigation links */
+.nav-drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-drawer .nav-link {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  transition: color var(--t-fast), padding-left var(--t-fast);
+  letter-spacing: 0.02em;
+}
+
+.nav-drawer .nav-link::after {
+  display: none;
+}
+
+.nav-drawer .nav-link::before {
+  display: none;
+}
+
+.nav-drawer .nav-link-arrow {
+  color: var(--gold);
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.nav-drawer .nav-link:hover {
+  color: var(--gold-light);
+  padding-left: 8px;
+}
+
+/* Drawer CTA button */
+.nav-drawer-cta-wrap {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(201, 168, 76, 0.2);
+}
+
+.nav-drawer .nav-cta {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding: 16px 24px;
+  font-size: 0.95rem;
+  border-radius: var(--radius-md);
+  margin-top: 0;
+  min-height: 56px;
+}
+
+/* Overlay */
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9989;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-med);
+}
+
+.nav-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Hero Section — mobile ── */
+#hero {
+  height: 100svh;
+  min-height: 580px;
+  align-items: flex-end;
+}
+
+.hero-overlay {
+  background:
+    linear-gradient(to top, rgba(5, 15, 35, 0.92) 0%, rgba(5, 15, 35, 0.65) 40%, rgba(5, 15, 35, 0.25) 100%);
+}
+
+.hero-content {
+  padding-inline: var(--container-px);
+  padding-bottom: clamp(80px, 14vw, 100px);
+  width: 100%;
+}
+
+.hero-inner {
+  max-width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  margin-bottom: 14px;
+  justify-content: center;
+}
+
+.hero-label::before {
+  width: 20px;
+}
+
+.hero-headline {
+  font-size: clamp(1.9rem, 8vw, 2.6rem);
+  line-height: 1.15;
+  margin-bottom: 14px;
+  letter-spacing: -0.01em;
+}
+
+.hero-sub {
+  font-size: clamp(0.88rem, 3.5vw, 1rem);
+  margin-bottom: 28px;
+  max-width: 100%;
+  text-align: center;
+  line-height: 1.7;
+}
+
+/* Buttons — stacked, full width, large touch targets */
+.hero-ctas {
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 360px;
+  gap: 12px;
+}
+
+.hero-ctas .btn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  min-height: 52px;
+  padding: 14px 20px;
+  font-size: 0.9rem;
+}
+
+/* Slide indicators — centered, larger tap area */
+.hero-indicators {
+  bottom: clamp(30px, 6vw, 44px);
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 8px;
+}
+
+.hero-dot {
+  width: 24px;
+  height: 4px;
+  border-radius: 2px;
+  /* Invisible tap target padding */
+  padding-block: 8px;
+  background-clip: content-box;
+}
+
+.hero-dot.active {
+  width: 36px;
+  background: var(--gold);
+  background-clip: content-box;
+}
+
+/* Scroll hint — hidden on mobile (swipe replaces it) */
+.hero-scroll-hint {
+  display: none;
+}
+
+/* ── Stats — 2×2 grid on mobile ── */
+.stats-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.stat-item {
+  padding: 24px 16px;
+}
+
+.stat-item:not(:last-child)::after {
+  display: none;
+}
+
+.stat-item:nth-child(odd) {
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.stat-item:nth-child(1),
+.stat-item:nth-child(2) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.stat-number {
+  font-size: clamp(2rem, 9vw, 2.8rem);
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+/* ── Section header — mobile ── */
+.section-header {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: clamp(1.7rem, 6vw, 2.2rem);
+}
+
+.section-subtitle {
+  font-size: 0.92rem;
+  max-width: 100%;
+}
+
+/* ── Why Choose — 1 column ── */
+.why-grid {
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.why-card {
+  padding: 28px 22px;
+}
+
+.why-card-icon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 18px;
+}
+
+.why-card-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.why-card-title {
+  font-size: 1.1rem;
+}
+
+.why-card-desc {
+  font-size: 0.88rem;
+}
+
+/* ── Vision — stacked ── */
+.vision-grid {
+  grid-template-columns: 1fr;
+  gap: 36px;
+}
+
+.vision-image-wrap img {
+  height: clamp(240px, 60vw, 320px);
+  object-fit: cover;
+  object-position: center 30%;
+}
+
+.vision-block {
+  margin-bottom: 28px;
+}
+
+.vision-block-title {
+  font-size: 1.25rem;
+}
+
+.vision-block-text {
+  font-size: 0.92rem;
+}
+
+/* ── Principal — stacked, centered ── */
+.principal-inner {
+  grid-template-columns: 1fr;
+  gap: 32px;
+  text-align: center;
+}
+
+.principal-portrait {
+  display: flex;
+  justify-content: center;
+}
+
+.principal-avatar {
+  width: 160px;
+  height: 160px;
+}
+
+.principal-avatar-svg {
+  width: 100px;
+  height: 100px;
+}
+
+.principal-quote {
+  font-size: clamp(1rem, 3.5vw, 1.25rem);
+  padding-left: 16px;
+  border-left-width: 2px;
+  line-height: 1.65;
+}
+
+.principal-name {
+  font-size: 1rem;
+}
+
+/* ── Admissions CTA — mobile ── */
+#admissions-cta {
+  padding-block: clamp(48px, 10vw, 64px);
+}
+
+.admissions-cta-title {
+  font-size: clamp(1.65rem, 6.5vw, 2.2rem);
+  max-width: 100%;
+}
+
+.admissions-cta-sub {
+  font-size: 0.92rem;
+  max-width: 100%;
+  margin-bottom: 28px;
+}
+
+.admissions-cta-actions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  max-width: 360px;
+  margin-inline: auto;
+}
+
+.admissions-cta-actions .btn {
+  width: 100%;
+  justify-content: center;
+  min-height: 52px;
+}
+
+/* ── Footer — 1 column ── */
+.footer-grid {
+  grid-template-columns: 1fr;
+  gap: 32px;
+  padding-bottom: 40px;
+}
+
+.footer-bottom {
+  flex-direction: column;
+  text-align: center;
+  gap: 12px;
+  padding-block: 20px;
+}
+
+.footer-bottom-links {
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── Intro Overlay — mobile ── */
+
+/* Logo wrap proportional */
+.intro-logo-wrap {
+  width: min(200px, 52vw);
+  height: min(200px, 52vw);
+}
+
+.intro-candles-wrap {
+  width: calc(min(200px, 52vw) * 1.6);
+  height: calc(min(200px, 52vw) * 1.3);
+}
+
+/* Remove upward offset — center properly on mobile */
+.intro-center-stage {
+  transform: none;
+  padding: 0 var(--container-px);
+  width: 100%;
+}
+
+/* Motto — Urdu text */
+.intro-motto {
+  font-size: clamp(1.1rem, 5vw, 1.5rem);
+  margin-top: 24px;
+  max-width: 90vw;
+  line-height: 1.6;
+}
+
+/* Divider — proportional */
+.intro-divider {
+  width: min(240px, 80vw);
+  margin: 12px 0 10px;
+}
+
+/* English line */
+.intro-instruction {
+  font-size: clamp(0.82rem, 3vw, 1rem);
+  max-width: min(480px, 90vw);
+  line-height: 1.65;
+}
+
+/* Mouse indicator — hidden on phones, replaced by swipe hint */
+.intro-scroll-block {
+  margin-top: 28px;
+}
+
+.intro-mouse-indicator {
+  display: none;
+}
+
+/* Swipe indicator — phones only */
+.intro-swipe-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.6;
+  animation: swipe-pulse 2.5s ease-in-out infinite;
+}
+
+.intro-swipe-hint-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.intro-swipe-hint-text {
+  font-size: 0.62rem;
+  font-family: var(--font-body);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 76, 0.7);
+}
+
+@keyframes swipe-pulse {
+  0%, 100% { opacity: 0.4; transform: translateY(0); }
+  50%       { opacity: 0.8; transform: translateY(4px); }
+}
+
+/* ── Section padding — mobile ── */
+.section-py {
+  padding-block: var(--section-py);
+}
+
+#stats {
+  padding-block: clamp(40px, 8vw, 56px);
+}
+
+
+/* ───────────────────────────────────────────────────────
+   SM — 360px and up (Standard phones)
+   Galaxy S series, Pixel, OnePlus, Nothing Phone
+─────────────────────────────────────────────────────── */
+
+@media (min-width: 360px) {
   :root {
-    --section-py: 64px;
-    --section-py-sm: 48px;
+    --container-px: 18px;
   }
 
-  .nav-menu,
-  .nav-cta {
-    display: none;
+  .nav-logo-icon {
+    width: 42px;
+    height: 42px;
   }
 
-  .nav-hamburger {
-    display: flex;
+  .nav-school-name {
+    font-size: 0.86rem;
   }
 
-  .hero-scroll-hint {
-    display: none;
-  }
-
-  .why-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .principal-inner {
-    grid-template-columns: 1fr;
-    gap: 36px;
-    text-align: center;
-  }
-
-  .principal-portrait {
-    display: flex;
-    justify-content: center;
-  }
-
-  .principal-quote {
-    padding-left: 20px;
-    font-size: 1.1rem;
-  }
-
-  .footer-grid {
-    grid-template-columns: 1fr;
-    gap: 36px;
-  }
-
-  .footer-bottom {
-    flex-direction: column;
-    text-align: center;
+  .hero-headline {
+    font-size: clamp(2rem, 7.5vw, 2.6rem);
   }
 
   .hero-ctas {
-    flex-direction: column;
-    max-width: 280px;
+    max-width: 380px;
+  }
+
+  .hero-ctas .btn {
+    font-size: 0.92rem;
+  }
+
+  .intro-motto {
+    font-size: clamp(1.2rem, 4.5vw, 1.5rem);
+  }
+
+  .intro-logo-wrap {
+    width: min(210px, 50vw);
+    height: min(210px, 50vw);
+  }
+
+  .intro-candles-wrap {
+    width: calc(min(210px, 50vw) * 1.6);
+    height: calc(min(210px, 50vw) * 1.3);
+  }
+
+  .stat-number {
+    font-size: clamp(2.1rem, 8vw, 2.8rem);
   }
 }
 
-@media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
+
+/* ───────────────────────────────────────────────────────
+   MD — 480px and up (Large phones)
+   iPhone Plus, iPhone Pro Max, Samsung Ultra
+─────────────────────────────────────────────────────── */
+
+@media (min-width: 480px) {
+  :root {
+    --container-px: 22px;
+    --section-py: clamp(50px, 9vw, 72px);
   }
 
-  .stat-item:nth-child(2)::after { display: none; }
-  .stat-item:nth-child(3)::after { display: none; }
+  /* Nav */
+  .nav-logo-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .nav-school-name {
+    font-size: 0.9rem;
+  }
+
+  .nav-school-tagline {
+    display: block;
+    font-size: 0.58rem;
+  }
+
+  /* Hero — still centered but more breathing room */
+  .hero-content {
+    padding-bottom: clamp(90px, 15vw, 110px);
+  }
+
+  .hero-headline {
+    font-size: clamp(2.2rem, 6.5vw, 2.9rem);
+    margin-bottom: 16px;
+  }
+
+  .hero-sub {
+    font-size: clamp(0.92rem, 2.8vw, 1.05rem);
+    max-width: 440px;
+  }
+
+  .hero-ctas {
+    max-width: 400px;
+    gap: 14px;
+  }
+
+  .hero-ctas .btn {
+    min-height: 54px;
+    font-size: 0.95rem;
+  }
+
+  .hero-indicators {
+    gap: 10px;
+  }
+
+  /* Stats — still 2×2 but more padding */
+  .stat-item {
+    padding: 28px 20px;
+  }
+
+  .stat-number {
+    font-size: clamp(2.2rem, 7vw, 3rem);
+  }
+
+  /* Why grid — 2 column on large phones */
+  .why-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  /* Intro */
+  .intro-logo-wrap {
+    width: min(220px, 46vw);
+    height: min(220px, 46vw);
+  }
+
+  .intro-candles-wrap {
+    width: calc(min(220px, 46vw) * 1.6);
+    height: calc(min(220px, 46vw) * 1.3);
+  }
+
+  .intro-motto {
+    font-size: clamp(1.25rem, 3.8vw, 1.6rem);
+    margin-top: 28px;
+  }
+
+  .intro-instruction {
+    font-size: clamp(0.88rem, 2.4vw, 1.05rem);
+  }
+
+  /* Vision image */
+  .vision-image-wrap img {
+    height: clamp(280px, 55vw, 380px);
+  }
+
+  /* Principal */
+  .principal-avatar {
+    width: 175px;
+    height: 175px;
+  }
+
+  /* Admissions */
+  .admissions-cta-actions {
+    max-width: 400px;
+  }
+
+  /* Section header */
+  .section-header {
+    margin-bottom: 48px;
+  }
+
+  .section-title {
+    font-size: clamp(1.85rem, 5.5vw, 2.4rem);
+  }
+}
+
+
+/* ───────────────────────────────────────────────────────
+   LG — 768px and up (Small tablets)
+   iPad Mini, Galaxy Tab, Surface Duo
+   KEY TRANSITION: Desktop nav replaces hamburger
+─────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) {
+  :root {
+    --container-px: 32px;
+    --section-py: clamp(64px, 9vw, 88px);
+    --section-py-sm: clamp(44px, 6vw, 60px);
+  }
+
+  /* ── Navbar — desktop nav returns ── */
+  .nav-menu {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-cta {
+    display: inline-flex;
+  }
+
+  .nav-hamburger {
+    display: none;
+  }
+
+  .nav-school-tagline {
+    display: block;
+    font-size: 0.62rem;
+  }
+
+  .nav-school-name {
+    font-size: 0.9rem;
+  }
+
+  .nav-logo-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  #navbar {
+    padding: 18px var(--container-px);
+  }
+
+  /* ── Hero — tablet: left-aligned, premium ── */
+  #hero {
+    align-items: center;
+  }
+
+  .hero-overlay {
+    background:
+      linear-gradient(to right, rgba(5, 15, 35, 0.80) 0%, rgba(5, 15, 35, 0.45) 55%, transparent 100%),
+      linear-gradient(to top, rgba(5, 15, 35, 0.60) 0%, transparent 55%);
+  }
+
+  .hero-content {
+    padding-bottom: 0;
+    padding-inline: var(--container-px);
+  }
+
+  .hero-inner {
+    max-width: 600px;
+    text-align: left;
+    align-items: flex-start;
+  }
+
+  .hero-label {
+    font-size: 0.72rem;
+    justify-content: flex-start;
+    margin-bottom: 18px;
+  }
+
+  .hero-label::before {
+    width: 28px;
+  }
+
+  .hero-headline {
+    font-size: clamp(2.4rem, 5.2vw, 3.4rem);
+    margin-bottom: 18px;
+    line-height: 1.12;
+  }
+
+  .hero-sub {
+    font-size: clamp(0.98rem, 2.2vw, 1.1rem);
+    margin-bottom: 32px;
+    max-width: 480px;
+    text-align: left;
+  }
+
+  /* Buttons — horizontal again */
+  .hero-ctas {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    max-width: 100%;
+    gap: 14px;
+  }
+
+  .hero-ctas .btn {
+    width: auto;
+    min-height: 48px;
+    padding: 13px 28px;
+  }
+
+  /* Scroll hint — visible on tablet+ */
+  .hero-scroll-hint {
+    display: flex;
+    right: var(--container-px);
+    bottom: 36px;
+  }
+
+  /* Stats — 4 column */
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+  }
+
+  .stat-item {
+    padding: 32px 20px;
+  }
+
+  .stat-item:not(:last-child)::after {
+    display: block;
+  }
 
   .stat-item:nth-child(odd) {
-    border-right: 1px solid rgba(255,255,255,0.12);
+    border-right: none;
   }
 
   .stat-item:nth-child(1),
   .stat-item:nth-child(2) {
-    border-bottom: 1px solid rgba(255,255,255,0.12);
+    border-bottom: none;
+  }
+
+  .stat-number {
+    font-size: clamp(2.4rem, 4.5vw, 3.2rem);
+    margin-bottom: 10px;
+  }
+
+  .stat-label {
+    font-size: 0.78rem;
+  }
+
+  /* Section header */
+  .section-header {
+    margin-bottom: 56px;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 4.2vw, 2.8rem);
+  }
+
+  .section-subtitle {
+    font-size: 1rem;
+    max-width: 520px;
+  }
+
+  /* Why grid — 2 columns */
+  .why-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .why-card {
+    padding: 34px 28px;
+  }
+
+  /* Vision — still stacked but better */
+  .vision-image-wrap img {
+    height: clamp(320px, 45vw, 440px);
+  }
+
+  .vision-block {
+    margin-bottom: 36px;
+  }
+
+  .vision-block-title {
+    font-size: 1.35rem;
+  }
+
+  /* Principal */
+  .principal-inner {
+    grid-template-columns: auto 1fr;
+    gap: 48px;
+    text-align: left;
+  }
+
+  .principal-portrait {
+    display: block;
+  }
+
+  .principal-avatar {
+    width: 180px;
+    height: 180px;
+  }
+
+  .principal-quote {
+    font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+    padding-left: 24px;
+    border-left-width: 3px;
+  }
+
+  /* Admissions */
+  .admissions-cta-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+  }
+
+  .admissions-cta-actions .btn {
+    width: auto;
+    min-height: 50px;
+  }
+
+  .admissions-cta-title {
+    font-size: clamp(1.9rem, 4.5vw, 2.5rem);
+  }
+
+  /* Footer — 2 column */
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px 40px;
+    padding-bottom: 48px;
+  }
+
+  .footer-bottom {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  /* Intro — tablet */
+  .intro-logo-wrap {
+    width: min(230px, 30vw);
+    height: min(230px, 30vw);
+  }
+
+  .intro-candles-wrap {
+    width: calc(min(230px, 30vw) * 1.6);
+    height: calc(min(230px, 30vw) * 1.3);
+  }
+
+  .intro-center-stage {
+    transform: translateY(-2vh);
+    padding: 0;
+  }
+
+  .intro-motto {
+    font-size: clamp(1.3rem, 2.8vw, 1.8rem);
+    margin-top: 28px;
+  }
+
+  .intro-instruction {
+    font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+    max-width: 460px;
+  }
+
+  .intro-divider {
+    width: 240px;
+    margin: 14px 0 12px;
+  }
+
+  /* Mouse indicator returns on tablet */
+  .intro-mouse-indicator {
+    display: inline-block;
+  }
+
+  .intro-swipe-hint {
+    display: none;
+  }
+
+  .intro-scroll-block {
+    margin-top: 36px;
   }
 }
+
+
+/* ───────────────────────────────────────────────────────
+   XL — 992px and up (Large tablets)
+   iPad Pro, Surface Go, large Android tablets
+─────────────────────────────────────────────────────── */
+
+@media (min-width: 992px) {
+  :root {
+    --container-px: 40px;
+    --section-py: clamp(72px, 9vw, 96px);
+  }
+
+  .nav-logo-icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .nav-school-name {
+    font-size: 0.95rem;
+  }
+
+  #navbar {
+    padding: 20px var(--container-px);
+  }
+
+  /* Hero */
+  .hero-inner {
+    max-width: 640px;
+  }
+
+  .hero-headline {
+    font-size: clamp(2.8rem, 4.8vw, 3.8rem);
+    margin-bottom: 20px;
+  }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.12rem);
+    margin-bottom: 36px;
+    max-width: 520px;
+  }
+
+  .hero-ctas .btn {
+    padding: 14px 30px;
+  }
+
+  /* Stats */
+  .stat-item {
+    padding: 36px 24px;
+  }
+
+  .stat-number {
+    font-size: clamp(2.6rem, 4vw, 3.4rem);
+  }
+
+  /* Section header */
+  .section-header {
+    margin-bottom: 60px;
+  }
+
+  .section-title {
+    font-size: clamp(2.2rem, 3.8vw, 2.9rem);
+  }
+
+  .section-subtitle {
+    font-size: 1.02rem;
+  }
+
+  /* Why grid — 3 columns */
+  .why-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+  }
+
+  .why-card {
+    padding: 38px 30px;
+  }
+
+  /* Vision — 2 columns */
+  .vision-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+
+  .vision-image-wrap img {
+    height: 480px;
+    object-position: center;
+  }
+
+  .vision-block {
+    margin-bottom: 38px;
+  }
+
+  .vision-block-title {
+    font-size: 1.4rem;
+  }
+
+  /* Principal */
+  .principal-inner {
+    gap: 56px;
+  }
+
+  .principal-avatar {
+    width: 190px;
+    height: 190px;
+  }
+
+  .principal-quote {
+    font-size: clamp(1.15rem, 2.3vw, 1.6rem);
+  }
+
+  /* Admissions */
+  .admissions-cta-title {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+  }
+
+  /* Footer — 3 column */
+  .footer-grid {
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 48px;
+  }
+
+  /* Intro */
+  .intro-logo-wrap {
+    width: min(240px, 26vw);
+    height: min(240px, 26vw);
+  }
+
+  .intro-candles-wrap {
+    width: calc(min(240px, 26vw) * 1.6);
+    height: calc(min(240px, 26vw) * 1.3);
+  }
+
+  .intro-motto {
+    font-size: clamp(1.4rem, 2.4vw, 1.95rem);
+  }
+
+  .intro-instruction {
+    font-size: clamp(1rem, 1.6vw, 1.32rem);
+  }
+}
+
+
+/* ───────────────────────────────────────────────────────
+   2XL — 1200px and up (Laptop)
+─────────────────────────────────────────────────────── */
+
+@media (min-width: 1200px) {
+  :root {
+    --container-px: 48px;
+    --section-py: clamp(80px, 9vw, 100px);
+  }
+
+  /* Navbar */
+  .nav-menu {
+    gap: 6px;
+  }
+
+  .nav-link {
+    font-size: 0.85rem;
+    padding: 6px 12px;
+  }
+
+  #navbar {
+    padding: 20px var(--container-px);
+  }
+
+  /* Hero */
+  .hero-inner {
+    max-width: 680px;
+  }
+
+  .hero-headline {
+    font-size: clamp(3.2rem, 4.5vw, 4.2rem);
+    margin-bottom: 22px;
+  }
+
+  .hero-sub {
+    font-size: clamp(1.02rem, 1.8vw, 1.15rem);
+    margin-bottom: 38px;
+  }
+
+  /* Stats */
+  .stat-item {
+    padding: 40px 24px;
+  }
+
+  .stat-number {
+    font-size: clamp(2.8rem, 3.8vw, 3.5rem);
+  }
+
+  /* Section header */
+  .section-header {
+    margin-bottom: 64px;
+  }
+
+  .section-title {
+    font-size: clamp(2.3rem, 3.5vw, 3rem);
+  }
+
+  /* Why card */
+  .why-card {
+    padding: 40px 32px;
+  }
+
+  .why-card-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 24px;
+  }
+
+  .why-card-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .why-card-title {
+    font-size: 1.2rem;
+  }
+
+  /* Vision */
+  .vision-grid {
+    gap: 72px;
+  }
+
+  .vision-image-wrap img {
+    height: 520px;
+  }
+
+  .vision-block {
+    margin-bottom: 42px;
+  }
+
+  .vision-block-title {
+    font-size: 1.5rem;
+  }
+
+  /* Principal */
+  .principal-inner {
+    gap: 64px;
+  }
+
+  .principal-avatar {
+    width: 200px;
+    height: 200px;
+  }
+
+  .principal-avatar-svg {
+    width: 120px;
+    height: 120px;
+  }
+
+  /* Admissions */
+  .admissions-cta-actions {
+    gap: 16px;
+  }
+
+  /* Footer — full 4 column */
+  .footer-grid {
+    grid-template-columns: 2fr 1fr 1fr 1.4fr;
+    gap: 48px;
+    padding-bottom: 56px;
+  }
+
+  /* Intro */
+  .intro-logo-wrap {
+    width: min(240px, 22vw);
+    height: min(240px, 22vw);
+  }
+
+  .intro-candles-wrap {
+    width: calc(min(240px, 22vw) * 1.6);
+    height: calc(min(240px, 22vw) * 1.3);
+  }
+
+  .intro-motto {
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    margin-top: 28px;
+  }
+
+  .intro-instruction {
+    font-size: clamp(1.05rem, 1.5vw, 1.35rem);
+    max-width: 480px;
+  }
+
+  .intro-scroll-block {
+    margin-top: 36px;
+  }
+}
+
+
+/* ───────────────────────────────────────────────────────
+   3XL — 1440px and up (Desktop)
+─────────────────────────────────────────────────────── */
+
+@media (min-width: 1440px) {
+  :root {
+    --container-px: 60px;
+    --section-py: clamp(88px, 8vw, 110px);
+  }
+
+  #navbar {
+    padding: 22px var(--container-px);
+  }
+
+  .nav-logo-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .nav-school-name {
+    font-size: 1rem;
+  }
+
+  .nav-school-tagline {
+    font-size: 0.66rem;
+  }
+
+  .nav-link {
+    font-size: 0.88rem;
+  }
+
+  .nav-cta {
+    padding: 11px 24px;
+    font-size: 0.84rem;
+  }
+
+  /* Hero */
+  .hero-headline {
+    font-size: clamp(3.8rem, 4.2vw, 4.6rem);
+    margin-bottom: 24px;
+  }
+
+  .hero-sub {
+    font-size: 1.15rem;
+    margin-bottom: 42px;
+    max-width: 540px;
+  }
+
+  .hero-ctas {
+    gap: 16px;
+  }
+
+  .hero-ctas .btn {
+    min-height: 50px;
+    padding: 14px 34px;
+  }
+
+  .hero-indicators {
+    bottom: 40px;
+    gap: 12px;
+  }
+
+  .hero-dot {
+    width: 32px;
+    height: 3px;
+  }
+
+  .hero-dot.active {
+    width: 52px;
+  }
+
+  /* Stats */
+  .stat-item {
+    padding: 44px 28px;
+  }
+
+  .stat-number {
+    font-size: clamp(3rem, 3.5vw, 3.8rem);
+  }
+
+  /* Section */
+  .section-header {
+    margin-bottom: 72px;
+  }
+
+  .section-title {
+    font-size: clamp(2.4rem, 3.2vw, 3.2rem);
+  }
+
+  /* Why */
+  .why-grid {
+    gap: 28px;
+  }
+
+  /* Vision */
+  .vision-grid {
+    gap: 80px;
+  }
+
+  .vision-image-wrap img {
+    height: 540px;
+  }
+
+  /* Principal */
+  .principal-inner {
+    gap: 72px;
+  }
+
+  /* Intro */
+  .intro-logo-wrap {
+    width: 240px;
+    height: 240px;
+  }
+
+  .intro-candles-wrap {
+    width: calc(240px * 1.6);
+    height: calc(240px * 1.3);
+  }
+
+  .intro-motto {
+    font-size: clamp(1.55rem, 2vw, 2.05rem);
+    margin-top: 30px;
+  }
+
+  .intro-instruction {
+    font-size: clamp(1.1rem, 1.4vw, 1.38rem);
+    max-width: 480px;
+  }
+
+  .intro-center-stage {
+    transform: translateY(-2vh);
+  }
+}
+
+
+/* ───────────────────────────────────────────────────────
+   4K — 1920px and up (Large Desktop / 4K)
+─────────────────────────────────────────────────────── */
+
+@media (min-width: 1920px) {
+  :root {
+    --section-py: clamp(100px, 7vw, 130px);
+    --section-py-sm: clamp(70px, 5vw, 90px);
+    --container-max: 1400px;
+    --container-px: 72px;
+  }
+
+  .nav-logo-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .nav-school-name {
+    font-size: 1.05rem;
+  }
+
+  .nav-link {
+    font-size: 0.92rem;
+    padding: 8px 14px;
+  }
+
+  .nav-cta {
+    padding: 12px 28px;
+    font-size: 0.88rem;
+  }
+
+  /* Hero */
+  .hero-inner {
+    max-width: 780px;
+  }
+
+  .hero-headline {
+    font-size: clamp(4.2rem, 3.8vw, 5.2rem);
+    margin-bottom: 26px;
+  }
+
+  .hero-sub {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin-bottom: 48px;
+  }
+
+  /* Stats */
+  .stat-item {
+    padding: 52px 36px;
+  }
+
+  .stat-number {
+    font-size: clamp(3.5rem, 3.2vw, 4.2rem);
+  }
+
+  /* Intro */
+  .intro-logo-wrap {
+    width: 260px;
+    height: 260px;
+  }
+
+  .intro-candles-wrap {
+    width: calc(260px * 1.6);
+    height: calc(260px * 1.3);
+  }
+
+  .intro-motto {
+    font-size: 2.2rem;
+    margin-top: 36px;
+  }
+
+  .intro-instruction {
+    font-size: 1.45rem;
+    max-width: 540px;
+  }
+}
+
+
+/* ───────────────────────────────────────────────────────
+   LANDSCAPE — Short screens in landscape orientation
+   Handles phones rotated sideways
+─────────────────────────────────────────────────────── */
+
+@media (max-height: 560px) and (orientation: landscape) {
+  /* Intro — compact for landscape phones */
+  .intro-logo-wrap {
+    width: min(130px, 22vh);
+    height: min(130px, 22vh);
+  }
+
+  .intro-candles-wrap {
+    width: calc(min(130px, 22vh) * 1.6);
+    height: calc(min(130px, 22vh) * 1.3);
+  }
+
+  .intro-center-stage {
+    transform: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 32px;
+    padding: 0 32px;
+    justify-content: center;
+  }
+
+  .intro-text-group {
+    align-items: flex-start;
+    text-align: left;
+    gap: 6px;
+  }
+
+  .intro-motto {
+    font-size: clamp(0.9rem, 2.5vh, 1.2rem);
+    margin-top: 0;
+    text-align: right;
+    direction: rtl;
+  }
+
+  .intro-divider {
+    width: min(200px, 30vw);
+    margin: 8px 0;
+  }
+
+  .intro-instruction {
+    font-size: clamp(0.78rem, 2vh, 0.95rem);
+    max-width: 36vw;
+  }
+
+  .intro-scroll-block {
+    margin-top: 10px;
+  }
+
+  .intro-swipe-hint {
+    display: none;
+  }
+
+  .intro-mouse-indicator {
+    display: inline-block;
+    width: 16px;
+    height: 26px;
+  }
+
+  /* Hero — landscape phone */
+  #hero {
+    min-height: 100svh;
+  }
+
+  .hero-content {
+    padding-bottom: 0;
+    padding-inline: 24px;
+  }
+
+  .hero-inner {
+    max-width: 55%;
+    text-align: left;
+    align-items: flex-start;
+  }
+
+  .hero-headline {
+    font-size: clamp(1.6rem, 5vh, 2.4rem);
+    margin-bottom: 10px;
+  }
+
+  .hero-sub {
+    font-size: clamp(0.8rem, 2.2vh, 0.95rem);
+    margin-bottom: 18px;
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .hero-ctas {
+    flex-direction: row;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .hero-ctas .btn {
+    width: auto;
+    min-height: 44px;
+    padding: 10px 20px;
+    font-size: 0.82rem;
+  }
+
+  .hero-indicators {
+    bottom: 14px;
+  }
+}
+
+
+/* ───────────────────────────────────────────────────────
+   REDUCED MOTION — Accessibility override
+─────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .intro-candles-svg .flame-g {
+    animation: none !important;
+  }
+
+  .hero-slide img {
+    animation: none !important;
+  }
+
+  .intro-swipe-hint {
+    animation: none !important;
+    opacity: 0.5;
+  }
+}
+
+

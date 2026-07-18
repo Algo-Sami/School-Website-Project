@@ -10,10 +10,11 @@
   // ── Navigation ──────────────────────────────────────────────
 
   function initNavbar() {
-    const navbar  = document.getElementById('navbar');
-    const burger  = document.getElementById('nav-burger');
-    const drawer  = document.getElementById('nav-drawer');
-    const overlay = document.getElementById('nav-overlay');
+    const navbar     = document.getElementById('navbar');
+    const burger     = document.getElementById('nav-burger');
+    const drawer     = document.getElementById('nav-drawer');
+    const overlay    = document.getElementById('nav-overlay');
+    const closeBtn   = document.getElementById('nav-drawer-close');
 
     if (!navbar) return;
 
@@ -24,14 +25,28 @@
     window.addEventListener('scroll', scrollHandler, { passive: true });
     scrollHandler(); // run immediately
 
+    // All focusable items inside drawer
+    function getDrawerFocusables() {
+      return drawer
+        ? Array.from(drawer.querySelectorAll('a, button'))
+        : [];
+    }
+
     // Mobile drawer toggle
     function openDrawer() {
       drawer?.classList.add('open');
       overlay?.classList.add('visible');
       burger?.classList.add('open');
       burger?.setAttribute('aria-expanded', 'true');
+      drawer?.setAttribute('aria-hidden', 'false');
+      overlay?.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
-      drawer?.querySelector('a, button')?.focus();
+
+      // Make drawer links focusable
+      getDrawerFocusables().forEach(el => el.removeAttribute('tabindex'));
+
+      // Focus the close button (first interactive element)
+      setTimeout(() => closeBtn?.focus(), 50);
     }
 
     function closeDrawer() {
@@ -39,19 +54,34 @@
       overlay?.classList.remove('visible');
       burger?.classList.remove('open');
       burger?.setAttribute('aria-expanded', 'false');
+      drawer?.setAttribute('aria-hidden', 'true');
+      overlay?.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+
+      // Remove drawer links from tab order
+      getDrawerFocusables().forEach(el => el.setAttribute('tabindex', '-1'));
     }
 
+    // Hamburger button
     burger?.addEventListener('click', () => {
       const isOpen = drawer?.classList.contains('open');
       isOpen ? closeDrawer() : openDrawer();
     });
 
+    // Dedicated close button
+    closeBtn?.addEventListener('click', () => {
+      closeDrawer();
+      burger?.focus();
+    });
+
     overlay?.addEventListener('click', closeDrawer);
 
-    // Close drawer when link clicked
+    // Close drawer when a navigation link is clicked
     drawer?.querySelectorAll('a').forEach((link) => {
-      link.addEventListener('click', closeDrawer);
+      link.addEventListener('click', () => {
+        closeDrawer();
+        burger?.focus();
+      });
     });
 
     // Escape key closes drawer
