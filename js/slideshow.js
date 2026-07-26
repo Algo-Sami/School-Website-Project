@@ -151,9 +151,11 @@
       heroEl.addEventListener('focusout', startAuto);
     }
 
-    // Keyboard navigation
+    // Keyboard navigation — only when not typing in an input
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') { stopAuto(); goToSlide((currentIndex - 1 + slides.length) % slides.length); startAuto(); }
+      const tag = document.activeElement ? document.activeElement.tagName : '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'ArrowLeft')  { stopAuto(); goToSlide((currentIndex - 1 + slides.length) % slides.length); startAuto(); }
       if (e.key === 'ArrowRight') { stopAuto(); nextSlide(); startAuto(); }
     });
 

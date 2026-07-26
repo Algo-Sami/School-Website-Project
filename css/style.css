@@ -54,18 +54,18 @@
   --font-accent:    'Cormorant Garamond', Georgia, serif;
   --font-body:      'Inter', system-ui, sans-serif;
 
-  /* Spacing */
-  --section-py:     clamp(50px, 8vw, 100px);
-  --section-py-sm:  clamp(35px, 5vw, 60px);
-  --container-max:  1200px;
-  --container-px:   clamp(16px, 4vw, 48px);
-
   /* Transitions */
   --ease-smooth:    cubic-bezier(0.22, 1, 0.36, 1);
   --ease-bounce:    cubic-bezier(0.34, 1.56, 0.64, 1);
   --t-fast:         0.18s;
   --t-med:          0.35s;
   --t-slow:         0.6s;
+
+  /* Spacing — defined here as a base; overridden per-breakpoint below */
+  --section-py:     clamp(40px, 10vw, 56px);
+  --section-py-sm:  clamp(28px, 7vw, 40px);
+  --container-max:  1200px;
+  --container-px:   16px;
 }
 
 /* ─── Reset & Base ───────────────────────────────────── */
@@ -760,9 +760,10 @@ body.intro-skip #hero .hero-scroll-hint {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  /* Start invisible — JS controls reveal timing after intro */
-  opacity: 0;
-  transform: translateY(-100%);
+  /* Visible by default — hidden during intro via body selector below;
+     this ensures navbar is accessible even if JS fails */
+  opacity: 1;
+  transform: translateY(0);
   transition:
     padding var(--t-med) var(--ease-smooth),
     background var(--t-med) var(--ease-smooth),
@@ -1393,7 +1394,6 @@ body.intro-skip #navbar {
   line-height: 1.5;
 }
 
-.vision-content {}
 
 .vision-block {
   margin-bottom: 44px;
@@ -1485,7 +1485,6 @@ body.intro-skip #navbar {
   opacity: 0.6;
 }
 
-.principal-content {}
 
 .principal-quote {
   font-family: var(--font-accent);
@@ -1601,7 +1600,6 @@ body.intro-skip #navbar {
   padding-bottom: 56px;
 }
 
-.footer-brand {}
 
 .footer-logo {
   display: flex;
@@ -1813,13 +1811,10 @@ body.intro-skip #navbar {
    shrunk from desktop.
 ─────────────────────────────────────────────────────── */
 
-/* ── Root tokens — base mobile ── */
-:root {
-  --container-px: 16px;
-  --section-py:   clamp(40px, 10vw, 56px);
-  --section-py-sm: clamp(28px, 7vw, 40px);
-  --container-max: 1200px;
-}
+/* ── Stat-item stagger delays (avoids inline style attributes in HTML) ── */
+.stats-grid .stat-item:nth-child(2) { transition-delay: 100ms; }
+.stats-grid .stat-item:nth-child(3) { transition-delay: 200ms; }
+.stats-grid .stat-item:nth-child(4) { transition-delay: 300ms; }
 
 /* ── Navbar — mobile base ── */
 #navbar {
@@ -2237,27 +2232,6 @@ body.intro-skip #navbar {
 .principal-portrait {
   display: flex;
   justify-content: center;
-}
-
-.principal-avatar {
-  width: 160px;
-  height: 160px;
-}
-
-.principal-avatar-svg {
-  width: 100px;
-  height: 100px;
-}
-
-.principal-quote {
-  font-size: clamp(1rem, 3.5vw, 1.25rem);
-  padding-left: 16px;
-  border-left-width: 2px;
-  line-height: 1.65;
-}
-
-.principal-name {
-  font-size: 1rem;
 }
 
 /* ── Admissions CTA — mobile ── */

@@ -70,11 +70,11 @@
 
 /* Inner core — faster, more energetic */
 @keyframes flame-flicker-inner {
-  0%, 100% { transform: scaleX(1)    scaleY(1)    translateX(0)     opacity: 1; }
-  20%      { transform: scaleX(0.92) scaleY(1.06) translateX(-0.8px) opacity: 0.9; }
-  40%      { transform: scaleX(1.06) scaleY(0.95) translateX(0.6px)  opacity: 1; }
-  60%      { transform: scaleX(0.94) scaleY(1.05) translateX(-0.4px) opacity: 0.92; }
-  80%      { transform: scaleX(1.04) scaleY(0.96) translateX(0.4px)  opacity: 1; }
+  0%, 100% { transform: scaleX(1)    scaleY(1)    translateX(0);      opacity: 1; }
+  20%      { transform: scaleX(0.92) scaleY(1.06) translateX(-0.8px); opacity: 0.9; }
+  40%      { transform: scaleX(1.06) scaleY(0.95) translateX(0.6px);  opacity: 1; }
+  60%      { transform: scaleX(0.94) scaleY(1.05) translateX(-0.4px); opacity: 0.92; }
+  80%      { transform: scaleX(1.04) scaleY(0.96) translateX(0.4px);  opacity: 1; }
 }
 
 /* Tip — fastest, brightest variation */

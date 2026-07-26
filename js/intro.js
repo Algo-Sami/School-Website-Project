@@ -190,6 +190,9 @@
       m = Math.min(1, (pct - 94) / 6);
     }
 
+    var mc = document.getElementById('main-content');
+    var nb = document.getElementById('navbar');
+
     if (m > 0) {
       if (n.introWrap) n.introWrap.classList.add('show-bg');
       if (n.logoBg) n.logoBg.style.opacity = m;
@@ -221,8 +224,6 @@
         n.introWrap.style.boxShadow = 'none';
       }
 
-      var mc = document.getElementById('main-content');
-      var nb = document.getElementById('navbar');
       if (mc) {
         mc.style.opacity = m;
         mc.style.visibility = m > 0 ? 'visible' : 'hidden';
@@ -245,8 +246,6 @@
       if (n.wrap) {
         n.wrap.style.opacity = 1;
       }
-      var mc = document.getElementById('main-content');
-      var nb = document.getElementById('navbar');
       if (mc) {
         mc.style.opacity = 0;
         mc.style.visibility = 'hidden';
@@ -399,9 +398,7 @@
       window.removeEventListener('scroll',onScroll);
       finish(overlay,stopParticles,true);
     }
-    overlay.addEventListener('click',doSkip,{once:true});
-    var hint=document.getElementById('intro-skip');
-    if(hint) hint.addEventListener('click',function(e){e.stopPropagation();doSkip();},{once:true});
+    overlay.addEventListener('click', doSkip, {once: true});
 
     window.addEventListener('keydown',function(e){
       if(isFinished) return;

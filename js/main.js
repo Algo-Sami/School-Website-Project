@@ -229,6 +229,18 @@
     ) {
       initScrollReveal();
     }
+
+    // Failsafe: if intro was already done when this runs (e.g. about.html),
+    // trigger scroll reveal after a short delay to ensure DOM is ready.
+    // On the homepage this guard prevents early reveals mid-intro.
+    if (
+      document.body.classList.contains('intro-skip') ||
+      document.body.classList.contains('intro-complete')
+    ) {
+      setTimeout(() => {
+        initScrollReveal();
+      }, 400);
+    }
   }
 
   if (document.readyState === 'loading') {
