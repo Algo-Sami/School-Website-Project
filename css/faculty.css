@@ -1,0 +1,717 @@
+/* ============================================================
+   FACULTY.CSS — Scoped Styles for Faculty & Educators Page
+   ============================================================ */
+
+/* ─── Active Navigation State ────────────────────────── */
+.faculty-page .nav-link.active {
+  color: var(--gold-light) !important;
+  position: relative;
+}
+
+.faculty-page .nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px;
+}
+
+.faculty-page #navbar {
+  background: rgba(10, 22, 45, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 rgba(201,168,76,0.12);
+}
+
+/* ─── Image Placeholder System (Editorial) ───────────── */
+.editorial-placeholder {
+  position: relative;
+  width: 100%;
+  padding-bottom: calc(100% / (var(--aspect-ratio, 16/9)));
+  background: linear-gradient(135deg, var(--primary-dark) 0%, rgba(26,58,92,0.85) 100%);
+  border: 1px dashed var(--border-gold);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editorial-placeholder img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+  z-index: 2;
+  transition: transform var(--t-med) var(--ease-smooth);
+}
+
+.editorial-placeholder:hover img {
+  transform: scale(1.04);
+}
+
+.editorial-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(201, 168, 76, 0.15);
+  border-radius: calc(var(--radius-lg) - 10px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ─── Hero Section ───────────────────────────────────── */
+#faculty-hero {
+  background: radial-gradient(circle at 30% 30%, var(--primary-dark) 0%, #081222 100%);
+  padding-top: clamp(100px, 12vw, 150px);
+  padding-bottom: clamp(60px, 8vw, 100px);
+  position: relative;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+#faculty-hero::before {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.04) 0%, transparent 70%);
+  top: -10%;
+  right: -5%;
+  pointer-events: none;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-text .section-label {
+  color: var(--gold-light);
+  margin-bottom: 12px;
+}
+
+.hero-text h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 800;
+  color: var(--text-white);
+  line-height: 1.15;
+  margin-bottom: 24px;
+}
+
+.hero-text h1 span {
+  color: var(--gold-light);
+}
+
+.hero-text p {
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.8;
+  max-width: 520px;
+  margin-bottom: 36px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ─── Section Spacing scoping ────────────────────────── */
+.faculty-page section {
+  overflow: hidden;
+}
+
+/* ─── Our Educators Introduction ─────────────────────── */
+#faculty-intro {
+  background: var(--surface);
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 64px;
+  align-items: center;
+}
+
+.intro-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.intro-heading-sub {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+  line-height: 1.25;
+}
+
+.intro-text {
+  font-size: 1rem;
+  color: var(--text-body);
+  line-height: 1.85;
+}
+
+.intro-text p:not(:last-child) {
+  margin-bottom: 20px;
+}
+
+/* ─── Faculty Statistics ──────────────────────────────── */
+#faculty-stats {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  padding-block: var(--section-py-sm);
+  position: relative;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 16px;
+  position: relative;
+}
+
+.stat-number {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 800;
+  color: var(--gold-light);
+  line-height: 1;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+/* ─── Faculty Directory Filters ────────────────────────── */
+#faculty-directory {
+  background: var(--cream);
+}
+
+.filter-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 48px;
+}
+
+.filter-container {
+  display: flex;
+  gap: 8px;
+  background: var(--cream-dark);
+  padding: 6px;
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-container::-webkit-scrollbar {
+  display: none; /* Safari & Chrome */
+}
+
+.filter-chip {
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-body);
+  transition: all var(--t-fast) var(--ease-smooth);
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  color: var(--primary);
+  background: rgba(26,58,92,0.05);
+}
+
+.filter-chip.is-active {
+  background: var(--primary);
+  color: var(--text-white);
+  box-shadow: 0 4px 12px rgba(26,58,92,0.15);
+}
+
+/* ─── Faculty Grid & Card Design ───────────────────────── */
+.faculty-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  min-height: 250px;
+}
+
+.faculty-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--t-med) var(--ease-smooth),
+              box-shadow var(--t-med) var(--ease-smooth),
+              border-color var(--t-med);
+  cursor: default;
+}
+
+.faculty-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-gold);
+}
+
+/* Card Portrait & Placeholders */
+.card-portrait {
+  position: relative;
+  width: 100%;
+  padding-bottom: 125%; /* 4:5 Portrait Aspect Ratio */
+  background: var(--cream-dark);
+  overflow: hidden;
+}
+
+.card-portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--t-slow) var(--ease-smooth);
+}
+
+.faculty-card:hover .card-portrait img {
+  transform: scale(1.05);
+}
+
+/* Fallback Branded Monogram Placeholder */
+.card-portrait.is-placeholder {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-portrait.is-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  border-radius: calc(var(--radius-lg) - 12px);
+  pointer-events: none;
+}
+
+.portrait-initials {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 3.8rem);
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Details area */
+.card-details {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.member-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.member-role {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gold-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+.card-accent-line {
+  width: 32px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  margin-bottom: 12px;
+  transition: width var(--t-med) var(--ease-smooth);
+}
+
+.faculty-card:hover .card-accent-line {
+  width: 56px;
+}
+
+.member-subject {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.member-exp {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.member-bio {
+  font-size: 0.85rem;
+  color: var(--text-body);
+  line-height: 1.6;
+  margin-top: auto;
+}
+
+/* Directory Empty State styling */
+.directory-empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 64px 24px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ─── Featured Educator Section ──────────────────────── */
+#featured-educator {
+  background: linear-gradient(160deg, var(--primary-dark) 0%, var(--primary) 100%);
+  padding-block: var(--section-py);
+  position: relative;
+  overflow: hidden;
+}
+
+#featured-educator::before {
+  content: '\201C';
+  position: absolute;
+  top: -30px;
+  left: 5%;
+  font-family: var(--font-display);
+  font-size: 28rem;
+  color: rgba(201, 168, 76, 0.05);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.featured-inner {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 64px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.featured-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  display: block;
+  margin-bottom: 14px;
+}
+
+.featured-editorial-quote {
+  font-family: var(--font-accent);
+  font-size: clamp(1.2rem, 2.5vw, 1.75rem);
+  font-style: italic;
+  font-weight: 400;
+  color: rgba(255,255,255,0.92);
+  line-height: 1.65;
+  margin-bottom: 32px;
+  position: relative;
+  padding-left: 32px;
+  border-left: 3px solid var(--gold);
+}
+
+.featured-phil-text {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.8;
+}
+
+/* ─── Why Our Teachers Matter ────────────────────────── */
+#why-teachers {
+  background: var(--surface);
+}
+
+.why-teachers-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+}
+
+.teacher-principle-card {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 36px 28px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--t-med) var(--ease-smooth),
+              box-shadow var(--t-med) var(--ease-smooth),
+              border-color var(--t-med);
+}
+
+.teacher-principle-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-gold);
+}
+
+.principle-num {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(201, 168, 76, 0.15);
+  margin-bottom: 16px;
+  transition: color var(--t-fast);
+}
+
+.teacher-principle-card:hover .principle-num {
+  color: var(--gold-light);
+}
+
+.principle-title {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+  margin-bottom: 8px;
+}
+
+.principle-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.principle-desc {
+  font-size: 0.88rem;
+  color: var(--text-body);
+  line-height: 1.65;
+}
+
+/* ─── Join the Journey CTA ───────────────────────────── */
+#faculty-admissions-cta {
+  background: var(--cream-dark);
+  text-align: center;
+}
+
+.admissions-inner {
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+.admissions-btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS (Mobile-First Layout Balancing)
+   ============================================================ */
+
+/* Base overrides below 480px (Galaxy Fold, Small phones) */
+@media (max-width: 480px) {
+  .hero-grid,
+  .intro-grid,
+  .stats-grid,
+  .faculty-grid,
+  .featured-inner,
+  .why-teachers-grid {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+
+  .intro-grid .editorial-placeholder,
+  .featured-inner .editorial-placeholder {
+    order: -1;
+  }
+
+  .hero-actions,
+  .admissions-btn-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .hero-actions .btn,
+  .admissions-btn-group .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-wrap {
+    justify-content: flex-start;
+    padding-inline: 4px;
+    margin-bottom: 32px;
+  }
+
+  .filter-container {
+    width: 100%;
+  }
+}
+
+/* Tablet (between 480px and 768px) */
+@media (min-width: 480px) and (max-width: 768px) {
+  .hero-grid,
+  .intro-grid,
+  .featured-inner {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+
+  .intro-grid .editorial-placeholder,
+  .featured-inner .editorial-placeholder {
+    order: -1;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .faculty-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .why-teachers-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+}
+
+/* Screen width 768px to 992px */
+@media (min-width: 768px) and (max-width: 992px) {
+  .hero-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .intro-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .faculty-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .featured-inner {
+    grid-template-columns: 1fr 1.2fr;
+    gap: 40px;
+  }
+
+  .why-teachers-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+}
+
+/* Screen width 992px to 1200px */
+@media (min-width: 992px) and (max-width: 1200px) {
+  .faculty-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .why-teachers-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+}
+
+/* 4K Screens (1920px and above) layout balancing */
+@media (min-width: 1920px) {
+  .featured-inner {
+    gap: 80px;
+  }
+
+  .faculty-grid {
+    gap: 36px;
+  }
+
+  .teacher-principle-card {
+    padding: 44px 32px;
+  }
+}
