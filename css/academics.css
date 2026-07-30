@@ -598,6 +598,16 @@
     gap: 32px !important;
   }
 
+  .hero-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-desc {
+    text-align: center;
+    max-width: 100%;
+  }
+
   .hero-actions,
   .cta-actions {
     flex-direction: column;
@@ -657,6 +667,19 @@
   .env-grid {
     grid-template-columns: 1fr !important;
     gap: 40px !important;
+  }
+
+  .hero-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-desc {
+    text-align: center;
+  }
+
+  .hero-actions {
+    justify-content: center;
   }
 
   .program-item {

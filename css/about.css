@@ -800,6 +800,19 @@
     gap: 32px !important;
   }
 
+  .hero-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-text p {
+    text-align: center;
+  }
+
+  .hero-text .section-label {
+    text-align: center;
+  }
+
   .comm-grid .image-placeholder {
     order: -1;
   }
@@ -839,6 +852,15 @@
   .future-grid {
     grid-template-columns: 1fr !important;
     gap: 40px !important;
+  }
+
+  .hero-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-text p {
+    text-align: center;
   }
 
   .comm-grid .image-placeholder {

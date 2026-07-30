@@ -596,6 +596,20 @@
     gap: 32px !important;
   }
 
+  .hero-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-text p {
+    text-align: center;
+    max-width: 100%;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+
   .intro-grid .editorial-placeholder,
   .featured-inner .editorial-placeholder {
     order: -1;
@@ -632,6 +646,19 @@
   .featured-inner {
     grid-template-columns: 1fr !important;
     gap: 40px !important;
+  }
+
+  .hero-text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-text p {
+    text-align: center;
+  }
+
+  .hero-actions {
+    justify-content: center;
   }
 
   .intro-grid .editorial-placeholder,
