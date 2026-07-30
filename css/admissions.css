@@ -53,8 +53,9 @@
   margin-bottom: 14px;
 }
 
-/* Light background section h2 titles */
-section:not(#admissions-hero) h2 {
+/* Light background section h2 titles — scoped to avoid leaking into dark containers */
+.section-spacing h2,
+.section-alt h2 {
   font-family: var(--font-display);
   font-size: clamp(2rem, 3.8vw, 2.8rem);
   font-weight: 700;
@@ -62,6 +63,8 @@ section:not(#admissions-hero) h2 {
   line-height: 1.25;
   margin-bottom: 20px;
 }
+
+/* .admissions-cta h2 color is set in the Final CTA section below with !important */
 
 /* Light background section descriptions */
 .section-desc {
@@ -499,21 +502,38 @@ section:not(#admissions-hero) h2 {
     right: auto;
     background: linear-gradient(180deg, var(--gold), rgba(201,168,76,0.1));
   }
+
+  /* Use CSS Grid: col1 = step-number (fixed), col2 = spans h3 + p (stacked) */
   .process-step {
-    display: flex;
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 20px;
     text-align: left;
     padding: 0 0 36px 0;
     width: 100%;
-    align-items: flex-start;
+    align-items: start;
   }
   .step-number {
-    margin: 0 20px 0 0;
-    flex-shrink: 0;
+    grid-column: 1;
+    grid-row: 1 / 3;       /* span both rows so it stays centered next to text */
+    margin: 0;
     width: 54px;
     height: 54px;
+    align-self: start;
   }
-  .step-title { font-size: 1rem; }
-  .step-desc { font-size: 0.9rem; }
+  .step-title {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+  .step-desc {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 0.9rem;
+    margin-top: 0;
+  }
 }
 
 /* ─── Section: Required Documents ────────────────────── */
@@ -819,7 +839,7 @@ section:not(#admissions-hero) h2 {
 .admissions-cta h2 {
   font-family: var(--font-display);
   font-size: clamp(1.8rem, 4vw, 2.8rem);
-  color: #ffffff;
+  color: #ffffff !important;
   margin-bottom: 16px;
 }
 
