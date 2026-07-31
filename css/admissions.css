@@ -914,3 +914,382 @@
   }
 }
 
+/* ─── Section: Official Admission Form Download ───────── */
+
+#admission-form-download {
+  /* inherits .section-spacing + .section-alt spacing and background */
+}
+
+.form-download-grid {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 72px;
+  align-items: center;
+}
+
+/* ── Document visual card ───────────────────────────────── */
+
+.form-doc-visual {
+  display: flex;
+  justify-content: center;
+}
+
+.form-doc-card {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.04),
+    0 10px 36px rgba(26,58,92,0.13),
+    0 20px 60px rgba(26,58,92,0.07);
+  overflow: hidden;
+  border: 1px solid rgba(26,58,92,0.07);
+  transition:
+    transform var(--t-med) var(--ease-smooth),
+    box-shadow var(--t-med) var(--ease-smooth);
+}
+
+.form-doc-card:hover {
+  transform: translateY(-8px) rotate(-0.4deg);
+  box-shadow:
+    0 4px 8px rgba(0,0,0,0.06),
+    0 20px 56px rgba(26,58,92,0.20),
+    0 0 0 1px rgba(201,168,76,0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-doc-card,
+  .form-doc-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Gold top accent bar */
+.form-doc-topbar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+}
+
+/* Dark navy header strip */
+.form-doc-header {
+  background: var(--primary-dark);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.form-doc-school-name {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.form-doc-badge {
+  font-size: 0.52rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--primary-dark);
+  background: var(--gold-light);
+  padding: 2px 7px;
+  border-radius: 50px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Card body — simulated form content */
+.form-doc-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-doc-photo-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+/* Photo placeholder box */
+.form-doc-photo-box {
+  width: 44px;
+  height: 56px;
+  flex-shrink: 0;
+  background: #e8edf3;
+  border: 1.5px dashed rgba(26,58,92,0.18);
+  border-radius: 4px;
+}
+
+.form-doc-title-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 4px;
+}
+
+/* Simulated text/heading lines */
+.form-doc-line {
+  height: 7px;
+  border-radius: 3px;
+  background: #dce3eb;
+}
+.form-doc-line--lg { width: 88%; }
+.form-doc-line--md { width: 66%; }
+.form-doc-line--sm { width: 44%; background: rgba(201,168,76,0.22); }
+
+/* Form field rows */
+.form-doc-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-doc-field-row {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.form-doc-label {
+  width: 54px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(26,58,92,0.13);
+  flex-shrink: 0;
+}
+
+.form-doc-value {
+  height: 6px;
+  border-radius: 3px;
+  background: #e4eaf1;
+  flex: 0 0 80px;
+}
+
+.form-doc-value--wide {
+  flex: 0 0 120px;
+}
+
+/* Signature boxes */
+.form-doc-sig-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.form-doc-sig-box {
+  flex: 1;
+  height: 22px;
+  border-radius: 3px;
+  border: 1px dashed rgba(26,58,92,0.18);
+  background: #f5f7fa;
+}
+
+/* Footer strip */
+.form-doc-footer-strip {
+  background: rgba(26,58,92,0.03);
+  border-top: 1px solid rgba(26,58,92,0.07);
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.form-doc-footer-strip svg {
+  flex-shrink: 0;
+  color: var(--gold-dark);
+}
+
+/* ── Right column: content ──────────────────────────────── */
+
+.form-download-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.form-download-content h2 {
+  margin-bottom: 18px;
+}
+
+.form-download-desc {
+  font-size: 1.05rem;
+  color: var(--text-body);
+  line-height: 1.8;
+  margin-bottom: 32px;
+  max-width: 520px;
+}
+
+/* ── 3-step mini process ─────────────────────────────────── */
+
+.form-manual-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 36px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-step-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.form-step-num {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex-shrink: 0;
+  width: 28px;
+  line-height: 1;
+}
+
+.form-step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.form-step-text strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.form-step-text span {
+  font-size: 0.87rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── Action buttons ──────────────────────────────────────── */
+
+.form-download-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+/* ── Instruction panel ───────────────────────────────────── */
+
+.form-instruction-panel {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(201,168,76,0.09), rgba(201,168,76,0.04));
+  border: 1px solid rgba(201,168,76,0.28);
+  border-radius: var(--radius-md);
+  max-width: 520px;
+}
+
+.form-instruction-icon {
+  flex-shrink: 0;
+  color: var(--gold-dark);
+  margin-top: 2px;
+}
+
+.form-instruction-panel strong {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+  margin-bottom: 5px;
+}
+
+.form-instruction-panel p {
+  font-size: 0.89rem;
+  color: var(--primary-dark);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Responsive — Tablet and below ──────────────────────── */
+
+@media (max-width: 900px) {
+  .form-download-grid {
+    grid-template-columns: 1fr;
+    gap: 44px;
+  }
+
+  .form-doc-visual {
+    order: -1;
+  }
+
+  .form-doc-card {
+    max-width: 280px;
+    margin-inline: auto;
+  }
+
+  .form-download-content {
+    align-items: center;
+    text-align: center;
+  }
+
+  /* Keep inner text aligned left for readability */
+  .form-download-desc,
+  .form-step-item,
+  .form-instruction-panel {
+    text-align: left;
+  }
+
+  .form-download-actions {
+    justify-content: center;
+  }
+
+  .form-instruction-panel {
+    max-width: 100%;
+  }
+}
+
+/* ── Responsive — Mobile ─────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .form-doc-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-download-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .form-download-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .form-instruction-panel {
+    padding: 16px;
+  }
+}
+
+

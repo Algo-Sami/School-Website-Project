@@ -24,6 +24,12 @@
    * }
    */
   
+  const admissionForm = {
+    title: "Official Admission Form",
+    file: "assets/admissionform.pdf",
+    fileType: "PDF"
+  };
+
   const admissionsData = {
     images: [
       {
@@ -35,6 +41,21 @@
       }
     ]
   };
+
+  /* -- Admission Form Initialization -------------------------- */
+
+  function initAdmissionFormLinks() {
+    const downloadBtn = document.getElementById('form-download-btn');
+    const viewBtn = document.getElementById('form-view-btn');
+
+    if (downloadBtn) {
+      downloadBtn.href = admissionForm.file;
+      downloadBtn.setAttribute('download', 'Ashraf-Islamia-Admission-Form.pdf');
+    }
+    if (viewBtn) {
+      viewBtn.href = admissionForm.file;
+    }
+  }
 
   /* -- Image Population ---------------------------------------- */
 
@@ -108,6 +129,7 @@
     populateImages(); 
     initFAQ();
     initTimelineReveal();
+    initAdmissionFormLinks();
   }
 
   if (document.readyState === 'loading') {
