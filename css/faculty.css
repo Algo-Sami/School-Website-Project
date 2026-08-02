@@ -2,24 +2,6 @@
    FACULTY.CSS — Scoped Styles for Faculty & Educators Page
    ============================================================ */
 
-/* ─── Active Navigation State ────────────────────────── */
-.faculty-page .nav-link.active {
-  color: var(--gold-light) !important;
-  position: relative;
-}
-
-.faculty-page .nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70%;
-  height: 2px;
-  background: var(--gold);
-  border-radius: 2px;
-}
-
 .faculty-page #navbar {
   background: rgba(10, 22, 45, 0.98);
   backdrop-filter: blur(20px);

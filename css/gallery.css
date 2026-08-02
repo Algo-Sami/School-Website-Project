@@ -18,25 +18,6 @@
   border: 0;
 }
 
-/* ─── Active Navigation State ────────────────────────── */
-
-.gallery-page .nav-link.active {
-  color: var(--gold-light) !important;
-  position: relative;
-}
-
-.gallery-page .nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70%;
-  height: 2px;
-  background: var(--gold);
-  border-radius: 2px;
-}
-
 /* Always show dark nav (no intro on inner pages) */
 .gallery-page #navbar {
   background: rgba(10, 22, 45, 0.98);

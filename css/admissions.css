@@ -3,25 +3,6 @@
    Ashraf Islamia Model Public Secondary School
    ============================================================ */
 
-/* ─── Active Navigation State ────────────────────────── */
-
-.admissions-page .nav-link.active {
-  color: var(--gold-light) !important;
-  position: relative;
-}
-
-.admissions-page .nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70%;
-  height: 2px;
-  background: var(--gold);
-  border-radius: 2px;
-}
-
 /* Navbar on admissions page should always show the dark background */
 .admissions-page #navbar {
   background: rgba(10, 22, 45, 0.98);
@@ -42,20 +23,19 @@
   border-bottom: 1px solid rgba(26, 58, 92, 0.05);
 }
 
-.section-label {
-  font-family: var(--font-body);
-  font-size: 0.92rem; /* Increased from 0.75rem for legibility */
+/* ─── Admissions-Scoped Typography Overrides ─────────── */
+
+/* Admissions section labels: slightly larger for legibility on light bg */
+.admissions-page .section-label {
+  font-size: 0.92rem;
   font-weight: 700;
   letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--gold-dark); /* Darker gold for better contrast on light backgrounds */
-  display: block;
-  margin-bottom: 14px;
+  color: var(--gold-dark);
 }
 
-/* Light background section h2 titles — scoped to avoid leaking into dark containers */
-.section-spacing h2,
-.section-alt h2 {
+/* Light background section h2 titles — scoped to admissions sections */
+.admissions-page .section-spacing h2,
+.admissions-page .section-alt h2 {
   font-family: var(--font-display);
   font-size: clamp(2rem, 3.8vw, 2.8rem);
   font-weight: 700;
@@ -67,13 +47,27 @@
 /* .admissions-cta h2 color is set in the Final CTA section below with !important */
 
 /* Light background section descriptions */
-.section-desc {
+.admissions-page .section-desc {
   font-size: 1.08rem;
   color: var(--text-body);
   line-height: 1.75;
   max-width: 720px;
   margin-inline: auto;
-  margin-bottom: 40px; /* Reduced from 56px for tighter coherence */
+  margin-bottom: 40px;
+}
+
+/* Fee note text — used in "Before You Apply" section */
+.fee-note {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  max-width: 700px;
+  margin-inline: auto;
+  margin-bottom: 24px;
+  line-height: 1.75;
+}
+
+.admissions-support-container {
+  max-width: 700px;
 }
 
 /* ─── Image Placeholder Shared Base ──────────────────── */

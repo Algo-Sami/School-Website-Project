@@ -70,6 +70,8 @@
   }
 
   let resizeHandler = null;
+  let cachedNavRect = null;
+  let cachedIntroWrapWidth = null;
 
   /* ── Scroll Render Engine ── */
   function render(pct, n) {
@@ -208,7 +210,13 @@
       }
 
       if (n.navLogo && n.introWrap) {
-        var r = n.navLogo.getBoundingClientRect();
+        if (!cachedNavRect) {
+          cachedNavRect = n.navLogo.getBoundingClientRect();
+        }
+        if (cachedIntroWrapWidth === null) {
+          cachedIntroWrapWidth = n.introWrap.offsetWidth || 240;
+        }
+        var r = cachedNavRect;
         var fromCX = window.innerWidth / 2;
         var fromCY = window.innerHeight / 2 - (window.innerHeight * 0.02);
         var toCX = r.left + r.width / 2;
@@ -217,7 +225,7 @@
         var dx = (toCX - fromCX) * m;
         var dy = (toCY - fromCY) * m;
         var targetWidth = r.width || 36;
-        var startWidth = n.introWrap.offsetWidth || 240;
+        var startWidth = cachedIntroWrapWidth;
         var sc = 1 - m * (1 - targetWidth / startWidth);
 
         n.introWrap.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(' + sc + ')';
@@ -270,6 +278,8 @@
       window.removeEventListener('resize', resizeHandler);
       resizeHandler = null;
     }
+    cachedNavRect = null;
+    cachedIntroWrapWidth = null;
     markShown();
     // Clear any inline styles set by render() so CSS class-based rules can take effect
     var mc=document.getElementById('main-content');
@@ -385,6 +395,8 @@
     window.addEventListener('scroll',onScroll,{passive:true});
 
     resizeHandler = function onResize() {
+      cachedNavRect = null;
+      cachedIntroWrapWidth = null;
       var sp = document.getElementById('prologue-spacer');
       if (sp) {
         sp.style.height = window.innerHeight + 'px';

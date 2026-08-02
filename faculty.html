@@ -79,6 +79,11 @@
           alt=""
           class="nav-logo-icon"
           aria-hidden="true"
+          width="46"
+          height="46"
+          decoding="async"
+          loading="eager"
+          fetchpriority="high"
         />
         <div class="nav-logo-text">
           <span class="nav-school-name">Ashraf Islamia MPSS</span>
@@ -142,6 +147,10 @@
               alt=""
               class="nav-drawer-logo-icon"
               aria-hidden="true"
+              width="44"
+              height="44"
+              decoding="async"
+              loading="lazy"
             />
             <span class="nav-drawer-school-name">Ashraf Islamia<br>Model Public SS</span>
           </a>
@@ -201,7 +210,7 @@
             </div>
           </div>
 
-          <div class="reveal" style="transition-delay: 150ms;">
+          <div class="reveal delay-150">
             <div class="editorial-placeholder" id="faculty-hero-img" style="--aspect-ratio: 16/9;" aria-label="Educators team portrait placeholder" role="img">
               <div class="placeholder-overlay">
                 <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -226,7 +235,7 @@
       <div class="container">
         <div class="intro-grid">
           
-          <div class="reveal" style="transition-delay: 100ms;">
+          <div class="reveal delay-100">
             <div class="editorial-placeholder" id="faculty-intro-img" style="--aspect-ratio: 4/3;" aria-label="Teacher mentoring a school student" role="img">
               <div class="placeholder-overlay">
                 <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -297,7 +306,7 @@
         </div>
 
         <!-- Horizontal scrollable filter selector chips -->
-        <div class="filter-wrap reveal" style="transition-delay: 50ms;">
+        <div class="filter-wrap reveal">
           <div class="filter-container" id="category-filter-container" role="group" aria-label="Filter faculty members by department">
             <!-- Dynamically populated via JS -->
           </div>
@@ -326,7 +335,7 @@
             <p class="featured-phil-text">Great teaching is more than delivering a lesson. It is about recognizing potential, encouraging curiosity, creating confidence, and helping students understand that learning is a lifelong journey.</p>
           </div>
 
-          <div class="reveal" style="transition-delay: 150ms;">
+          <div class="reveal delay-150">
             <div class="editorial-placeholder" id="featured-educator-img" style="--aspect-ratio: 1.6;" aria-label="Featured Educator Portrait" role="img">
               <div class="placeholder-overlay">
                 <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -426,6 +435,9 @@
               alt=""
               class="footer-logo-icon"
               aria-hidden="true"
+              width="42"
+              height="42"
+              decoding="async"
               loading="lazy"
             />
             <span class="footer-school-name">Ashraf Islamia<br>Model Public Secondary School</span>
@@ -435,8 +447,13 @@
           </p>
           <!-- Social links -->
           <div class="footer-social" aria-label="Social media links">
-            <a href="https://www.facebook.com/share/1FzfXFNtSC/" class="footer-social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+            <a href="https://www.facebook.com/share/1FzfXFNtSC/" class="footer-social-link" aria-label="Visit Ashraf Islamia Model Public School Official Facebook Page (opens in new tab)" target="_blank" rel="noopener noreferrer">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </a>
+            <a href="https://youtube.com/@ashrafislamia1575" class="footer-social-link" aria-label="Visit Ashraf Islamia Model Public School Official YouTube Channel (opens in new tab)" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.108C19.516 3.5 12 3.5 12 3.5s-7.517 0-9.388.555a3.002 3.002 0 0 0-2.11 2.108C0 8.03 0 12 0 12s0 3.97.502 5.837a3.003 3.003 0 0 0 2.11 2.108C4.483 20.5 12 20.5 12 20.5s7.517 0 9.388-.555a3.003 3.003 0 0 0 2.11-2.108C24 15.97 24 12 24 12s0-3.97-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
             </a>
           </div>
         </div>
@@ -457,18 +474,18 @@
         <div>
           <h3 class="footer-col-title">Academics</h3>
           <ul class="footer-links" role="list">
-            <li><a href="academics.html" class="footer-link">Primary Section</a></li>
-            <li><a href="academics.html" class="footer-link">Middle Section</a></li>
-            <li><a href="academics.html" class="footer-link">Secondary (Matric)</a></li>
-            <li><a href="academics.html" class="footer-link">Science Stream</a></li>
-            <li><a href="academics.html" class="footer-link">Arts Stream</a></li>
+            <li><a href="academics.html#programs" class="footer-link">Primary Section</a></li>
+            <li><a href="academics.html#programs" class="footer-link">Middle Section</a></li>
+            <li><a href="academics.html#programs" class="footer-link">Secondary (Matric)</a></li>
+            <li><a href="academics.html#programs" class="footer-link">Science Stream</a></li>
+            <li><a href="academics.html#programs" class="footer-link">Arts Stream</a></li>
           </ul>
         </div>
 
         <!-- Contact info -->
         <div>
           <h3 class="footer-col-title">Contact Us</h3>
-          <address style="font-style:normal">
+          <address>
             <ul class="footer-contact-list" role="list">
               <li class="footer-contact-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -476,11 +493,11 @@
               </li>
               <li class="footer-contact-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <span><a href="tel:+923324445969" style="text-decoration:none; color:inherit;">0332 4445969</a></span>
+                <span><a href="tel:+923324445969">0332 4445969</a></span>
               </li>
               <li class="footer-contact-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                <span><a href="mailto:ashrafislamia67@gmail.com" style="text-decoration:none; color:inherit;">ashrafislamia67@gmail.com</a></span>
+                <span><a href="mailto:ashrafislamia67@gmail.com">ashrafislamia67@gmail.com</a></span>
               </li>
               <li class="footer-contact-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -498,9 +515,9 @@
           &copy; <span id="footer-year">2026</span> Ashraf Islamia Model Public Secondary School. All rights reserved.
         </p>
         <nav class="footer-bottom-links" aria-label="Footer legal links">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Use</a>
-          <a href="#">Sitemap</a>
+          <a href="contact.html">Contact Us</a>
+          <a href="admissions.html">Admissions</a>
+          <a href="about.html">About AIMPS</a>
         </nav>
       </div>
     </div>

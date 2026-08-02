@@ -179,6 +179,7 @@
       img.src = 'assets/images/faculty_hero.png';
       img.alt = 'Professional school educators in a library';
       img.loading = 'eager';
+      img.decoding = 'async';
       img.onerror = () => img.remove();
       heroImgContainer.appendChild(img);
     }
@@ -189,6 +190,7 @@
       img.src = 'assets/images/faculty_intro.png';
       img.alt = 'Teacher helping student with notebook';
       img.loading = 'lazy';
+      img.decoding = 'async';
       img.onerror = () => img.remove();
       introImgContainer.appendChild(img);
     }
@@ -199,6 +201,7 @@
       img.src = 'assets/images/featured_educator.png';
       img.alt = 'Senior school teacher at desk in a library';
       img.loading = 'lazy';
+      img.decoding = 'async';
       img.onerror = () => img.remove();
       featuredImgContainer.appendChild(img);
     }
@@ -320,7 +323,7 @@
       if (member.image) {
         portraitHTML = `
           <div class="card-portrait">
-            <img src="${member.image}" alt="${member.name} Portrait" loading="lazy" />
+            <img src="${member.image}" alt="${member.name} Portrait" loading="lazy" decoding="async" />
           </div>
         `;
       } else {

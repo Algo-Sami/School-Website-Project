@@ -33,6 +33,24 @@
   };
 
   /* ═══════════════════════════════════════════════════════════
+     SHARED SCROLL REVEAL OBSERVER
+     Single instance reused across all triggerReveal() calls —
+     prevents memory leaks from repeated new IntersectionObserver.
+  ═══════════════════════════════════════════════════════════ */
+
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  /* ═══════════════════════════════════════════════════════════
      DOM CACHE
   ═══════════════════════════════════════════════════════════ */
 
@@ -168,16 +186,18 @@
     `).join('');
   }
 
+  // Map stagger index to utility delay class (defined in style.css)
+  const CARD_DELAY_CLASSES = ['', 'delay-80', 'delay-160'];
+
   function buildAlbumCard(ev, index) {
-    const delay = (index % 3) * 80;
+    const delayClass = CARD_DELAY_CLASSES[index % 3] || '';
     return `
       <article
-        class="album-card reveal-stagger reveal"
+        class="album-card reveal-stagger reveal${delayClass ? ' ' + delayClass : ''}"
         data-event-id="${ev.id}"
         tabindex="0"
         role="button"
         aria-label="View ${ev.name} — ${ev.photoCount} photos, ${ev.videoCount} videos"
-        style="transition-delay:${delay}ms;"
       >
         <div class="album-card-img-wrap">
           <img
@@ -306,15 +326,18 @@
     }, 300);
   }
 
+  // Photo stagger delay classes mapping (0, 50, 100, 160, 200, 300 ms)
+  const PHOTO_DELAY_CLASSES = ['', 'delay-50', 'delay-100', 'delay-160', 'delay-200', 'delay-300'];
+
   function buildPhotoThumb(photo, index, event) {
+    const delayClass = PHOTO_DELAY_CLASSES[index % 6] || '';
     return `
       <div
-        class="photo-thumb reveal-stagger reveal"
+        class="photo-thumb reveal-stagger reveal${delayClass ? ' ' + delayClass : ''}"
         data-index="${index}"
         tabindex="0"
         role="button"
         aria-label="View photo ${index + 1} of ${event.photos.length}: ${photo.alt}"
-        style="transition-delay:${(index % 6) * 60}ms;"
       >
         <img
           src="${photo.src}"
@@ -347,15 +370,18 @@
     });
   }
 
+  // Video stagger delay classes mapping
+  const VIDEO_DELAY_CLASSES = ['', 'delay-100', 'delay-200'];
+
   function buildVideoCard(vid, index) {
+    const delayClass = VIDEO_DELAY_CLASSES[index % 3] || '';
     return `
       <div
-        class="video-card reveal-stagger reveal"
+        class="video-card reveal-stagger reveal${delayClass ? ' ' + delayClass : ''}"
         data-index="${index}"
         tabindex="0"
         role="button"
         aria-label="Play video: ${vid.title}"
-        style="transition-delay:${index * 100}ms;"
       >
         <div class="video-card-thumb-wrap">
           <img
@@ -363,6 +389,8 @@
             alt="${vid.thumbnailAlt}"
             loading="lazy"
             decoding="async"
+            width="640"
+            height="360"
             class="video-card-thumb"
           />
           <div class="video-card-play" aria-hidden="true">
@@ -545,18 +573,7 @@
 
   function triggerReveal(ctx = document) {
     const els = $$('.reveal, .reveal-left, .reveal-right', ctx);
-    if (!els.length) return;
-
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
-
-    els.forEach(el => observer.observe(el));
+    els.forEach(el => revealObserver.observe(el));
   }
 
   /* ═══════════════════════════════════════════════════════════

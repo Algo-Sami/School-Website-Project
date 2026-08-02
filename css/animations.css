@@ -136,8 +136,8 @@
 }
 
 @keyframes rule-extend {
-  from { width: 0; opacity: 0; }
-  to   { width: 60px; opacity: 1; }
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
 }
 
 @keyframes tagline-fade-up {

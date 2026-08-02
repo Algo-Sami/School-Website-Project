@@ -49,6 +49,11 @@
         platform: "Facebook",
         url: "https://www.facebook.com/share/1FzfXFNtSC/",
         enabled: true
+      },
+      {
+        platform: "YouTube",
+        url: "https://youtube.com/@ashrafislamia1575",
+        enabled: true
       }
     ],
     map: {
@@ -72,7 +77,8 @@
     const img = document.createElement('img');
     img.src = heroImage.url;
     img.alt = heroImage.alt || 'School visual';
-    img.loading = 'lazy';
+    img.loading = 'eager';
+    img.decoding = 'async';
     if (heroImage.objectPosition) {
       img.style.objectPosition = heroImage.objectPosition;
     }

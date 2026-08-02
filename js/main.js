@@ -223,23 +223,12 @@
 
     // If intro was already complete/skipped when this script runs, initialise
     // scroll reveal immediately to avoid elements being permanently hidden.
+    // The revealInitialised flag inside initScrollReveal() prevents double-init.
     if (
       document.body.classList.contains('intro-skip') ||
       document.body.classList.contains('intro-complete')
     ) {
       initScrollReveal();
-    }
-
-    // Failsafe: if intro was already done when this runs (e.g. about.html),
-    // trigger scroll reveal after a short delay to ensure DOM is ready.
-    // On the homepage this guard prevents early reveals mid-intro.
-    if (
-      document.body.classList.contains('intro-skip') ||
-      document.body.classList.contains('intro-complete')
-    ) {
-      setTimeout(() => {
-        initScrollReveal();
-      }, 400);
     }
   }
 

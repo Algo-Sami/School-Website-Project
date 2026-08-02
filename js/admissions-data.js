@@ -67,7 +67,7 @@
       const img = document.createElement('img');
       img.src = item.url;
       img.alt = item.alt || 'School visual';
-      img.loading = 'lazy';
+      img.loading = item.id.includes('hero') ? 'eager' : 'lazy';
       img.decoding = 'async';
       if (item.objectPosition) img.style.objectPosition = item.objectPosition;
       img.onerror = () => img.remove();
