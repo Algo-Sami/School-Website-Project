@@ -257,6 +257,17 @@
     const section = document.getElementById('faculty-stats');
     if (!section) return;
 
+    if (!('IntersectionObserver' in window)) {
+      facultyData.statistics.forEach((stat) => {
+        const valEl = document.getElementById(stat.id);
+        if (valEl) {
+          const formatted = stat.formatComma ? stat.target.toLocaleString() : stat.target.toString();
+          setLeadingText(valEl, formatted);
+        }
+      });
+      return;
+    }
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;

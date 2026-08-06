@@ -71,6 +71,16 @@
     const statsSection = document.getElementById('stats');
     if (!statsSection) return;
 
+    if (!('IntersectionObserver' in window)) {
+      COUNTER_CONFIG.forEach(({ id, target }) => {
+        const el = document.getElementById(id);
+        if (el) {
+          setLeadingText(el, target.toLocaleString());
+        }
+      });
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {

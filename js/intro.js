@@ -271,7 +271,11 @@
     overlay.style.display='none'; overlay.setAttribute('aria-hidden','true');
     var sp=document.getElementById('prologue-spacer'); if(sp) sp.remove();
     document.body.classList.remove('prologue-active');
-    window.scrollTo(0,0);
+    // Temporarily disable smooth-scroll so scrollTo(0,0) is instant (not animated).
+    // html { scroll-behavior: smooth } in style.css would cause a visible scroll-back glitch.
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 0);
+    setTimeout(function () { document.documentElement.style.scrollBehavior = ''; }, 100);
     document.body.classList.add(isSkip?'intro-skip':'intro-complete');
     if(stopParticles) stopParticles();
     if(resizeHandler) {

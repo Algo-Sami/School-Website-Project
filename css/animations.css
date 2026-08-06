@@ -5,6 +5,28 @@
 
 
 /* ═══════════════════════════════════════════════════════
+   MOTION DESIGN TOKENS
+   Centralised timing/easing values — referenced by JS too
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  /* Duration scale */
+  --dur-instant:  100ms;
+  --dur-fast:     160ms;
+  --dur-med:      300ms;
+  --dur-slow:     500ms;
+  --dur-reveal:   600ms;
+  --dur-large:    700ms;
+
+  /* Canonical easing curve — used for all reveals & micro-interactions */
+  --ease-reveal:  cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Stagger base delay between sequential items */
+  --stagger-step: 80ms;
+}
+
+
+/* ═══════════════════════════════════════════════════════
    INTRO CINEMATIC SEQUENCE — Phase Keyframes
    ═══════════════════════════════════════════════════════ */
 
@@ -58,7 +80,6 @@
 
 /* ─── Living flame flicker (stable phase) ─────────────── */
 
-/* Outer body — slow organic sway and subtle brightness variance */
 @keyframes flame-flicker-outer {
   0%, 100% { transform: scaleX(1)    scaleY(1)    skewX(0deg)    translateX(0);    opacity: 0.95; }
   15%      { transform: scaleX(0.96) scaleY(1.04) skewX(-1.8deg) translateX(-0.6px); opacity: 0.88; }
@@ -68,7 +89,6 @@
   80%      { transform: scaleX(0.98) scaleY(1.01) skewX(-0.6deg) translateX(-0.2px); opacity: 0.90; }
 }
 
-/* Inner core — faster, more energetic */
 @keyframes flame-flicker-inner {
   0%, 100% { transform: scaleX(1)    scaleY(1)    translateX(0);      opacity: 1; }
   20%      { transform: scaleX(0.92) scaleY(1.06) translateX(-0.8px); opacity: 0.9; }
@@ -77,7 +97,6 @@
   80%      { transform: scaleX(1.04) scaleY(0.96) translateX(0.4px);  opacity: 1; }
 }
 
-/* Tip — fastest, brightest variation */
 @keyframes flame-flicker-tip {
   0%, 100% { opacity: 0.85; transform: scaleY(1); }
   25%       { opacity: 0.95; transform: scaleY(1.08) translateY(-1px); }
@@ -85,7 +104,6 @@
   75%       { opacity: 0.9;  transform: scaleY(1.04) translateY(-0.5px); }
 }
 
-/* Glow pulse on the flame wrap */
 @keyframes flame-glow-pulse {
   0%, 100% { filter: drop-shadow(0 0 12px rgba(201,168,76,0.4)) drop-shadow(0 0 30px rgba(201,168,76,0.15)); }
   40%       { filter: drop-shadow(0 0 20px rgba(201,168,76,0.7)) drop-shadow(0 0 50px rgba(201,168,76,0.3)) drop-shadow(0 0 80px rgba(201,168,76,0.12)); }
@@ -167,14 +185,11 @@
   to   { opacity: 0; transform: scale(0.6) translateY(-8px); }
 }
 
-/* ─── Legacy exit (fallback) ──────────────────────────── */
-
 @keyframes intro-exit {
   0%   { opacity: 1; transform: scale(1); }
   80%  { opacity: 0; transform: scale(1.04); }
   100% { opacity: 0; }
 }
-
 
 /* ═══════════════════════════════════════════════════════
    HERO SECTION — Cascade Reveal (post-intro)
@@ -205,7 +220,6 @@
   to   { transform: scale(1.06); }
 }
 
-
 /* ═══════════════════════════════════════════════════════
    NAVIGATION
    ═══════════════════════════════════════════════════════ */
@@ -217,52 +231,105 @@
 
 
 /* ═══════════════════════════════════════════════════════
+   PAGE-IN — Inner page hero reveal
+   Used on about, facilities, faculty, contact, etc.
+   ═══════════════════════════════════════════════════════ */
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Applied by motion.js to .page-hero children */
+.page-hero-revealed {
+  animation: page-in var(--dur-reveal) var(--ease-reveal) both;
+}
+
+.page-hero-revealed.delay-1 { animation-delay:  80ms; }
+.page-hero-revealed.delay-2 { animation-delay: 180ms; }
+.page-hero-revealed.delay-3 { animation-delay: 280ms; }
+
+
+/* ═══════════════════════════════════════════════════════
    SCROLL REVEAL SYSTEM
    ═══════════════════════════════════════════════════════ */
 
 .reveal {
   opacity: 0;
-  transform: translateY(36px);
-  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(24px);
+  will-change: transform, opacity;
+  transition:
+    opacity   var(--dur-reveal) var(--ease-reveal),
+    transform var(--dur-reveal) var(--ease-reveal);
 }
 
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
+  will-change: auto;
 }
 
 .reveal-left {
   opacity: 0;
-  transform: translateX(-40px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(-32px);
+  will-change: transform, opacity;
+  transition:
+    opacity   var(--dur-large) var(--ease-reveal),
+    transform var(--dur-large) var(--ease-reveal);
 }
 
 .reveal-left.visible {
   opacity: 1;
   transform: translateX(0);
+  will-change: auto;
 }
 
 .reveal-right {
   opacity: 0;
-  transform: translateX(40px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(32px);
+  will-change: transform, opacity;
+  transition:
+    opacity   var(--dur-large) var(--ease-reveal),
+    transform var(--dur-large) var(--ease-reveal);
 }
 
 .reveal-right.visible {
   opacity: 1;
   transform: translateX(0);
+  will-change: auto;
 }
 
-/* Stagger delays for card grids */
-.reveal-stagger:nth-child(1) { transition-delay: 0ms; }
-.reveal-stagger:nth-child(2) { transition-delay: 80ms; }
+/* Stagger delays — 8 items at 80ms steps */
+.reveal-stagger:nth-child(1) { transition-delay:   0ms; }
+.reveal-stagger:nth-child(2) { transition-delay:  80ms; }
 .reveal-stagger:nth-child(3) { transition-delay: 160ms; }
 .reveal-stagger:nth-child(4) { transition-delay: 240ms; }
 .reveal-stagger:nth-child(5) { transition-delay: 320ms; }
 .reveal-stagger:nth-child(6) { transition-delay: 400ms; }
+.reveal-stagger:nth-child(7) { transition-delay: 480ms; }
+.reveal-stagger:nth-child(8) { transition-delay: 560ms; }
+
+
+/* ═══════════════════════════════════════════════════════
+   IMAGE REVEAL SYSTEM
+   Applied by motion.js when image loads + enters viewport
+   ═══════════════════════════════════════════════════════ */
+
+/* State before reveal — applied immediately to lazy images */
+img[loading="lazy"].img-pending {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity   var(--dur-slow) var(--ease-reveal),
+    transform var(--dur-slow) var(--ease-reveal);
+  will-change: transform, opacity;
+}
+
+img[loading="lazy"].img-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  will-change: auto;
+}
 
 
 /* ═══════════════════════════════════════════════════════
@@ -296,26 +363,100 @@
    ═══════════════════════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
+
+  /* ── Timing tokens — collapse all durations to near-zero ── */
+  :root {
+    --dur-instant:  0ms;
+    --dur-fast:     0ms;
+    --dur-med:      0ms;
+    --dur-slow:     0ms;
+    --dur-reveal:   0ms;
+    --dur-large:    0ms;
+    --stagger-step: 0ms;
+  }
+
+  /* ── Scroll-reveal: show immediately without movement ── */
   .reveal,
   .reveal-left,
   .reveal-right {
     opacity: 1;
     transform: none;
     transition: none;
+    will-change: auto;
   }
 
   .reveal-stagger {
     transition-delay: 0ms !important;
   }
 
-  /* Disable all animations globally */
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  /* Hero section — show immediately */
+  body.intro-complete #hero .hero-slideshow,
+  body.intro-complete #hero .hero-overlay,
+  body.intro-complete #hero .hero-label,
+  body.intro-complete #hero .hero-headline,
+  body.intro-complete #hero .hero-sub,
+  body.intro-complete #hero .hero-ctas,
+  body.intro-complete #hero .hero-indicators,
+  body.intro-complete #hero .hero-scroll-hint {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
   }
 
+  /* Intro overlay — skip all cinematic animations */
+  .flame-g,
+  .candle-g.lit .flame-outer,
+  .candle-g.lit .flame-inner,
+  #intro-particles,
+  .intro-bg-ambient,
+  .intro-mouse-indicator,
+  .intro-candles-glow {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Navbar slide-in — show immediately */
+  body.intro-complete #navbar,
+  body.intro-skip #navbar {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Slideshow transitions */
+  .hero-slideshow img,
+  .hero-slideshow .slide {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Counter animations */
+  .stat-number {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Intro overlay fade-out must still work so page reveals */
   #intro-overlay.fade-out {
-    transition: opacity 0.8s ease-in-out !important;
+    transition: opacity 0.3s ease !important;
+  }
+
+  /* Ken-burns on hero bg */
+  @keyframes hero-ken-burns {
+    from { transform: none; }
+    to   { transform: none; }
+  }
+
+  /* Ambient breathe */
+  @keyframes ambient-breathe {
+    from { opacity: 0.6; transform: scale(1); }
+    to   { opacity: 0.6; transform: scale(1); }
+  }
+
+  /* Mouse wheel bob */
+  @keyframes mouse-breath {
+    from { opacity: 0.45; }
+    to   { opacity: 0.45; }
   }
 }
+

@@ -132,6 +132,23 @@
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    if (!('IntersectionObserver' in window)) {
+      aboutContent.statistics.forEach((stat) => {
+        const valEl = document.getElementById(stat.id);
+        const lblEl = document.getElementById(stat.id + '-lbl');
+        if (lblEl && stat.label) {
+          lblEl.textContent = stat.label;
+        }
+        if (valEl) {
+          const formattedTarget = stat.formatComma
+            ? stat.target.toLocaleString()
+            : stat.target.toString();
+          setCounterText(valEl, formattedTarget, stat.suffix);
+        }
+      });
+      return;
+    }
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;

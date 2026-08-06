@@ -38,17 +38,20 @@
      prevents memory leaks from repeated new IntersectionObserver.
   ═══════════════════════════════════════════════════════════ */
 
-  const revealObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          revealObserver.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.1 }
-  );
+  let revealObserver = null;
+  if ('IntersectionObserver' in window) {
+    revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+  }
 
   /* ═══════════════════════════════════════════════════════════
      DOM CACHE
@@ -573,6 +576,10 @@
 
   function triggerReveal(ctx = document) {
     const els = $$('.reveal, .reveal-left, .reveal-right', ctx);
+    if (!revealObserver) {
+      els.forEach(el => el.classList.add('visible'));
+      return;
+    }
     els.forEach(el => revealObserver.observe(el));
   }
 

@@ -139,7 +139,7 @@
 
 #admissions-hero {
   background: linear-gradient(135deg, var(--primary-dark) 0%, #0c1c30 100%);
-  padding-top: calc(80px + var(--section-py));
+  padding-top: clamp(100px, 12vw, 150px); /* standardised — matches about, faculty, contact, facilities */
   padding-bottom: var(--section-py);
   color: var(--text-white);
   overflow: hidden;

@@ -201,7 +201,7 @@
   border-bottom: 1px solid var(--border);
   padding-block: 20px;
   position: sticky;
-  top: 72px;
+  top: var(--navbar-height, 72px); /* matches navbar height token from style.css */
   z-index: 100;
   box-shadow: 0 2px 12px rgba(26, 58, 92, 0.06);
 }
@@ -943,6 +943,8 @@
   align-items: center;
   justify-content: center;
   animation: lb-fade-in 0.2s ease forwards;
+  /* Prevents scroll from leaking to background page on iOS/Android */
+  overscroll-behavior: contain;
 }
 
 #gallery-lightbox[hidden] { display: none; }
@@ -1099,6 +1101,8 @@
   justify-content: center;
   padding: 24px;
   animation: lb-fade-in 0.2s ease forwards;
+  /* Prevents scroll from leaking to background page on iOS/Android */
+  overscroll-behavior: contain;
 }
 
 #video-modal[hidden] { display: none; }

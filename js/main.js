@@ -96,6 +96,10 @@
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
 
+    if (!('IntersectionObserver' in window)) {
+      return;
+    }
+
     const sectionObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -123,6 +127,11 @@
 
     const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
     if (!revealEls.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      revealEls.forEach((el) => el.classList.add('visible'));
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {

@@ -128,8 +128,8 @@
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 48px;
+  grid-template-columns: 1fr; /* mobile-first: single column */
+  gap: 40px;
   align-items: center;
 }
 
@@ -173,8 +173,8 @@
 
 .who-grid {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 56px;
+  grid-template-columns: 1fr; /* mobile-first: single column */
+  gap: 40px;
   align-items: center;
 }
 
@@ -321,8 +321,8 @@
 
 .mv-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 36px;
+  grid-template-columns: 1fr; /* mobile-first: single column */
+  gap: 24px;
 }
 
 .mv-card {
@@ -399,8 +399,8 @@
 
 .values-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: 1fr; /* mobile-first: single column */
+  gap: 20px;
 }
 
 .value-card {
@@ -467,8 +467,8 @@
 
 .philosophy-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
+  grid-template-columns: 1fr; /* mobile-first: single column */
+  gap: 40px;
   align-items: flex-start;
 }
 
@@ -552,8 +552,8 @@
 
 .comm-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 56px;
+  grid-template-columns: 1fr; /* mobile-first: single column */
+  gap: 40px;
   align-items: center;
 }
 
@@ -608,9 +608,10 @@
 
 .leadership-grid {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 56px;
+  grid-template-columns: 1fr; /* mobile-first: single column */
+  gap: 40px;
   align-items: center;
+  text-align: center;
 }
 
 .principal-portrait-container {
@@ -623,6 +624,7 @@
   width: clamp(180px, 30vw, 240px);
   height: clamp(180px, 30vw, 240px);
 }
+
 
 .leadership-text {
   display: flex;
@@ -682,7 +684,7 @@
 
 .stats-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr 1fr; /* mobile-first: 2-column for stats */
   gap: 20px;
 }
 
@@ -718,8 +720,8 @@
 
 .future-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 56px;
+  grid-template-columns: 1fr; /* mobile-first: single column */
+  gap: 40px;
   align-items: center;
 }
 
@@ -763,23 +765,103 @@
 
 /* ============================================================
    RESPONSIVE BREAKPOINTS (Mobile-First)
+   Base styles above are 1-column. We progressively add columns.
    ============================================================ */
 
-/* Base overrides below 480px (mobile compact) */
-@media (max-width: 480px) {
-  .hero-grid,
-  .who-grid,
-  .mv-grid,
-  .values-grid,
-  .philosophy-layout,
-  .comm-grid,
-  .leadership-grid,
-  .stats-container,
-  .future-grid {
-    grid-template-columns: 1fr !important;
-    gap: 32px !important;
+/* ── Tablet portrait (480px and up) ── */
+@media (min-width: 480px) {
+  .values-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
+  .stats-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Tablet landscape / small desktop (768px and up) ── */
+@media (min-width: 768px) {
+  .hero-grid {
+    grid-template-columns: 1.2fr 1fr;
+    gap: 48px;
+  }
+
+  .who-grid {
+    grid-template-columns: 1fr 1.2fr;
+    gap: 56px;
+  }
+
+  .mv-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+
+  .values-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .philosophy-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+  }
+
+  .comm-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+  }
+
+  .comm-grid .image-placeholder {
+    order: 0; /* reset any mobile reorder */
+  }
+
+  .leadership-grid {
+    grid-template-columns: auto 1fr;
+    gap: 56px;
+    text-align: left;
+  }
+
+  .leadership-text {
+    align-items: flex-start;
+  }
+
+  .leadership-message {
+    padding-left: 24px;
+    border-left: 2px solid var(--gold);
+  }
+
+  .stats-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .future-grid {
+    grid-template-columns: 1.2fr 1fr;
+    gap: 56px;
+  }
+
+  .hero-text {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .hero-text p {
+    text-align: left;
+  }
+
+  .hero-text .section-label {
+    text-align: left;
+  }
+}
+
+/* ── Desktop (992px and up) ── */
+@media (min-width: 992px) {
+  .values-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+/* ── Mobile-only adjustments (max-width for hero text centering) ── */
+@media (max-width: 767px) {
   .hero-text {
     align-items: center;
     text-align: center;
@@ -791,10 +873,6 @@
 
   .hero-text .section-label {
     text-align: center;
-  }
-
-  .comm-grid .image-placeholder {
-    order: -1;
   }
 
   .leadership-grid {
@@ -820,110 +898,13 @@
     width: 100%;
     justify-content: center;
   }
-}
-
-/* Tablet (between 480px and 768px) */
-@media (min-width: 480px) and (max-width: 768px) {
-  .hero-grid,
-  .who-grid,
-  .philosophy-layout,
-  .comm-grid,
-  .leadership-grid,
-  .future-grid {
-    grid-template-columns: 1fr !important;
-    gap: 40px !important;
-  }
-
-  .hero-text {
-    align-items: center;
-    text-align: center;
-  }
-
-  .hero-text p {
-    text-align: center;
-  }
 
   .comm-grid .image-placeholder {
     order: -1;
   }
-
-  .mv-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  .values-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  .stats-container {
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-
-  .leadership-grid {
-    text-align: center;
-  }
-
-  .leadership-text {
-    align-items: center;
-  }
-
-  .leadership-message {
-    padding-left: 0;
-    border-left: none;
-  }
 }
 
-/* Screen width 768px to 992px */
-@media (min-width: 768px) and (max-width: 992px) {
-  .hero-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-  }
-
-  .who-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-  }
-
-  .mv-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
-
-  .values-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  .philosophy-layout {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-
-  .comm-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-  }
-
-  .leadership-grid {
-    grid-template-columns: auto 1fr;
-    gap: 32px;
-  }
-
-  .stats-container {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .future-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-  }
-}
-
-/* 4K Screens (1920px and above) layout balancing */
+/* ── 4K Screens (1920px and above) ── */
 @media (min-width: 1920px) {
   .timeline-wrap {
     max-width: 1000px;

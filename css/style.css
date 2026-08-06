@@ -4,8 +4,8 @@
    ============================================================ */
 
 /* ─── Google Fonts ───────────────────────────────────── */
-
-@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap');
+/* Fonts loaded via <link rel="stylesheet"> in each page's <head>
+   (replaced from @import to avoid render-blocking on initial load) */
 
 /* ─── Design Tokens ──────────────────────────────────── */
 
@@ -65,6 +65,9 @@
   --section-py-sm:  clamp(28px, 7vw, 40px);
   --container-max:  1200px;
   --container-px:   16px;
+
+  /* Navbar height — used for sticky offsets (gallery filter bar, etc.) */
+  --navbar-height:  72px;
 }
 
 /* ─── Reset & Base ───────────────────────────────────── */
@@ -126,12 +129,146 @@ ul, ol {
   list-style: none;
 }
 
+/* ─── Accessibility Utilities ────────────────────────── */
+
+/* Skip to main content link — visually hidden until focused */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 10000;
+  display: inline-block;
+  padding: 12px 24px;
+  background: var(--primary-dark);
+  color: var(--gold-light);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 2px solid var(--gold);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: top 0.2s ease;
+  white-space: nowrap;
+}
+
+.skip-link:focus {
+  top: 16px;
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Screen-reader-only utility — content hidden visually but read by AT */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Global focus-visible styles — keyboard navigation indicators */
+/* Applied only via :focus-visible so mouse users are unaffected */
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Override for elements that already have a border-radius */
+.btn:focus-visible,
+.nav-cta:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 50px;
+}
+
+.nav-link:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.footer-social-link:focus-visible,
+.footer-link:focus-visible,
+.footer-logo:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Form controls — focus ring */
+.form-control:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 0;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(26,58,92,0.15);
+}
+
+/* FAQ & filter buttons */
+.faq-question:focus-visible,
+.filter-btn:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Lightbox & dialog buttons */
+#lb-prev:focus-visible,
+#lb-next:focus-visible,
+#lb-close:focus-visible,
+#vm-close:focus-visible,
+#back-to-gallery:focus-visible {
+  outline: 3px solid var(--gold-light);
+  outline-offset: 3px;
+}
+
+/* Dark-bg sections — lighter focus ring for visibility */
+#principal :focus-visible,
+.nav-drawer :focus-visible,
+#intro-overlay :focus-visible {
+  outline-color: var(--gold-light);
+}
+
+/* Minimum touch target sizes (WCAG 2.5.5) */
+.footer-social-link {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-social-link svg {
+  width: 20px;
+  height: 20px;
+}
+
+.nav-hamburger {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ─── Utility ────────────────────────────────────────── */
 
 .container {
   max-width: var(--container-max);
   margin-inline: auto;
   padding-inline: var(--container-px);
+  /* Notch support in landscape mode on mobile/tablet devices */
+  padding-left: calc(var(--container-px) + env(safe-area-inset-left, 0px));
+  padding-right: calc(var(--container-px) + env(safe-area-inset-right, 0px));
 }
 
 .section-py {
@@ -284,8 +421,9 @@ ul, ol {
 }
 
 .btn:hover::after { opacity: 1; }
-.btn:hover { transform: translateY(-2px); }
-.btn:active { transform: translateY(0); }
+.btn:hover  { transform: translateY(-2px); }
+.btn:active,
+.btn[data-pressed] { transform: translateY(1px); box-shadow: none; }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
@@ -295,6 +433,11 @@ ul, ol {
 
 .btn-primary:hover {
   box-shadow: 0 8px 28px rgba(201,168,76,0.5);
+}
+
+.btn-primary:active,
+.btn-primary[data-pressed] {
+  box-shadow: 0 2px 8px rgba(201,168,76,0.3);
 }
 
 .btn-outline {
@@ -1001,6 +1144,12 @@ body.intro-skip #navbar {
   box-shadow: 0 6px 20px rgba(201,168,76,0.55);
 }
 
+.nav-cta:active,
+.nav-cta[data-pressed] {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(201,168,76,0.3);
+}
+
 /* Mobile hamburger */
 .nav-hamburger {
   display: none;
@@ -1149,9 +1298,7 @@ body.intro-skip #navbar {
   width: 100%;
 }
 
-.hero-inner {
-  /* max-width, text-align, display set per breakpoint */
-}
+/* .hero-inner layout is set entirely per breakpoint in the responsive section */
 
 .hero-label {
   display: inline-flex;
@@ -1394,7 +1541,7 @@ body.intro-skip #navbar {
 }
 
 .why-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
   border-color: var(--border-gold);
 }
@@ -1486,6 +1633,7 @@ body.intro-skip #navbar {
   max-width: calc(100% - 56px);
   background: rgba(15,35,64,0.88);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: var(--radius-md);
   padding: 16px 22px;
   border: 1px solid rgba(201,168,76,0.3);
@@ -1695,12 +1843,13 @@ body.intro-skip #navbar {
   background: var(--primary-dark);
   color: rgba(255,255,255,0.75);
   padding-top: 72px;
-  padding-bottom: 0;
+  /* Safe-area bottom inset — iPhone home bar (X, 11, 12, 13, 14, 15 series) */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.4fr;
+  grid-template-columns: 2fr 1fr 1.4fr;
   gap: 48px;
   padding-bottom: 56px;
 }
@@ -1758,7 +1907,8 @@ body.intro-skip #navbar {
   align-items: center;
   justify-content: center;
   color: rgba(255,255,255,0.55);
-  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
+  /* Added transform for subtle scale on hover */
+  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast), transform var(--t-fast);
   text-decoration: none;
 }
 
@@ -1766,6 +1916,7 @@ body.intro-skip #navbar {
   border-color: var(--gold);
   color: var(--gold-light);
   background: rgba(201,168,76,0.08);
+  transform: scale(1.10);
 }
 
 .footer-social-link svg {
@@ -1793,7 +1944,8 @@ body.intro-skip #navbar {
   font-size: 0.88rem;
   color: rgba(255,255,255,0.55);
   text-decoration: none;
-  transition: color var(--t-fast), padding-left var(--t-fast);
+  /* Use transform instead of padding-left to avoid layout thrash */
+  transition: color var(--t-fast), transform var(--t-fast);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1801,7 +1953,7 @@ body.intro-skip #navbar {
 
 .footer-link:hover {
   color: var(--text-white);
-  padding-left: 4px;
+  transform: translateX(4px);
 }
 
 .footer-contact-list {
@@ -1880,33 +2032,9 @@ address {
   color: rgba(255,255,255,0.7);
 }
 
-/* ─── FOCUS VISIBLE (Accessibility) ─────────────────── */
+/* ─── FOCUS VISIBLE — canonical rule is at line 173; no redefinition needed here ─── */
 
-:focus-visible {
-  outline: 2.5px solid var(--gold);
-  outline-offset: 3px;
-  border-radius: var(--radius-sm);
-}
-
-/* ─── SKIP LINK ──────────────────────────────────────── */
-
-.skip-link {
-  position: absolute;
-  top: -100px;
-  left: 16px;
-  background: var(--primary);
-  color: var(--text-white);
-  padding: 10px 20px;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  font-size: 0.9rem;
-  z-index: 99999;
-  transition: top var(--t-fast);
-}
-
-.skip-link:focus {
-  top: 16px;
-}
+/* ─── SKIP LINK — canonical rule at top of file (line 132) ─── */
 
 /* ═══════════════════════════════════════════════════════════════════
    RESPONSIVE SYSTEM — Mobile-First, 8 Breakpoints
@@ -1996,7 +2124,8 @@ address {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  /* Prevents scroll from leaking to background page on iOS/Android */
+  overscroll-behavior: contain;
 }
 
 .nav-drawer.open {
@@ -2088,7 +2217,7 @@ address {
   align-items: center;
   justify-content: space-between;
   min-height: 56px;
-  transition: color var(--t-fast), padding-left var(--t-fast);
+  transition: color var(--t-fast), transform var(--t-fast);
   letter-spacing: 0.02em;
 }
 
@@ -2108,7 +2237,8 @@ address {
 
 .nav-drawer .nav-link:hover {
   color: var(--gold-light);
-  padding-left: 8px;
+  /* Use transform instead of padding-left to avoid layout thrash */
+  transform: translateX(6px);
 }
 
 /* Drawer CTA button */
@@ -2124,7 +2254,8 @@ address {
   justify-content: center;
   padding: 16px 24px;
   font-size: 0.95rem;
-  border-radius: var(--radius-md);
+  /* Keep pill shape consistent with desktop CTA (50px) */
+  border-radius: 50px;
   margin-top: 0;
   min-height: 56px;
 }
@@ -2147,7 +2278,8 @@ address {
 
 /* ── Hero Section — mobile ── */
 #hero {
-  height: 100svh;
+  height: 100vh;   /* fallback for browsers without svh support (Safari <15.5, FF <101) */
+  height: 100svh;  /* svh excludes mobile browser chrome; preferred on modern browsers */
   min-height: 580px;
   align-items: flex-end;
 }
@@ -3056,7 +3188,7 @@ address {
 
   /* Footer — 3 column */
   .footer-grid {
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1.4fr;
     gap: 48px;
   }
 
@@ -3195,9 +3327,9 @@ address {
     gap: 16px;
   }
 
-  /* Footer — full 4 column */
+  /* Footer — 3 column */
   .footer-grid {
-    grid-template-columns: 2fr 1fr 1fr 1.4fr;
+    grid-template-columns: 2fr 1fr 1.4fr;
     gap: 48px;
     padding-bottom: 56px;
   }
@@ -3508,6 +3640,7 @@ address {
 
   /* Hero — landscape phone */
   #hero {
+    min-height: 100vh;   /* svh fallback */
     min-height: 100svh;
   }
 

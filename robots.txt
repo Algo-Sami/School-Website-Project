@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Crawl-delay: 10
+
+# [DOMAIN CONFIG] Update sitemap URL below when production domain changes
+Sitemap: https://www.aimpschool.com/sitemap.xml

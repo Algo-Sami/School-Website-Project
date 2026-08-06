@@ -1,0 +1,528 @@
+/* ============================================================
+   FACILITIES.CSS — Scoped Styles for Facilities Page
+   Ashraf Islamia Model Public Secondary School
+   ============================================================ */
+
+.facilities-page #navbar {
+  background: rgba(15, 35, 64, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 rgba(201,168,76,0.12);
+}
+
+/* ─── Image Placeholder System ───────────────────────── */
+.image-placeholder {
+  position: relative;
+  width: 100%;
+  padding-bottom: calc(100% / (var(--aspect-ratio, 16/9)));
+  background: linear-gradient(135deg, var(--primary-dark) 0%, rgba(26,58,92,0.85) 100%);
+  border: 1px dashed var(--border-gold);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-placeholder img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+  z-index: 2;
+  transition: transform var(--t-med) var(--ease-smooth);
+}
+
+.image-placeholder:hover img {
+  transform: scale(1.04);
+}
+
+.image-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(201, 168, 76, 0.15);
+  border-radius: calc(var(--radius-lg) - 10px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.placeholder-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 20px;
+  z-index: 1;
+}
+
+.placeholder-icon-large {
+  color: var(--gold-light);
+  opacity: 0.7;
+}
+
+.placeholder-icon-large svg {
+  width: 36px;
+  height: 36px;
+}
+
+.placeholder-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  opacity: 0.8;
+}
+
+/* ─── Hero Section ───────────────────────────────────── */
+#facilities-hero {
+  background: radial-gradient(circle at 30% 30%, var(--primary-dark) 0%, #081222 100%);
+  padding-top: clamp(100px, 12vw, 150px);
+  padding-bottom: clamp(60px, 8vw, 100px);
+  position: relative;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+#facilities-hero::before {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.04) 0%, transparent 70%);
+  top: -10%;
+  right: -5%;
+  pointer-events: none;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-text .section-label {
+  color: var(--gold-light);
+  margin-bottom: 16px;
+}
+
+.hero-text h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 800;
+  color: var(--text-white);
+  line-height: 1.15;
+  margin-bottom: 24px;
+}
+
+.hero-desc {
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  max-width: 580px;
+}
+
+/* ─── Featured Facilities Section ─────────────────────── */
+#featured-facilities {
+  background-color: var(--cream);
+}
+
+#featured-facilities-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(48px, 8vw, 96px);
+}
+
+.feat-item {
+  width: 100%;
+}
+
+.feat-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: clamp(32px, 6vw, 64px);
+  align-items: center;
+}
+
+.feat-row-reverse {
+  grid-template-columns: 1fr 1.1fr;
+}
+
+.feat-image-wrap {
+  width: 100%;
+}
+
+.feat-content-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-block: 20px;
+}
+
+.feat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  background-color: var(--primary);
+  border-radius: var(--radius-md);
+  color: var(--gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.feat-icon-wrap svg {
+  width: 24px;
+  height: 24px;
+}
+
+.feat-card-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 16px;
+}
+
+.feat-card-desc {
+  font-size: 1.02rem;
+  color: var(--text-body);
+  line-height: 1.75;
+}
+
+/* ─── Campus Facilities Grid ────────────────────────── */
+#campus-facilities-grid {
+  background-color: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+.grid-card {
+  background: var(--surface-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: transform var(--t-med) var(--ease-smooth), box-shadow var(--t-med) var(--ease-smooth);
+}
+
+.grid-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.grid-card-image-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+.grid-card-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.grid-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.grid-card-icon {
+  width: 36px;
+  height: 36px;
+  background-color: rgba(26, 58, 92, 0.08);
+  border-radius: var(--radius-sm);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.grid-card-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.grid-card-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0;
+}
+
+.grid-card-desc {
+  font-size: 0.92rem;
+  color: var(--text-body);
+  line-height: 1.6;
+}
+
+/* ─── Student Life Section ──────────────────────────── */
+#student-life {
+  background-color: var(--cream);
+}
+
+.split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: clamp(32px, 6vw, 64px);
+  align-items: center;
+}
+
+.split-image-wrap {
+  width: 100%;
+}
+
+.split-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.split-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 18px;
+}
+
+.split-desc {
+  font-size: 1.02rem;
+  color: var(--text-body);
+  line-height: 1.7;
+  margin-bottom: 30px;
+}
+
+.life-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.life-card {
+  display: flex;
+  gap: 16px;
+  background: var(--surface);
+  padding: 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.life-card-icon {
+  width: 40px;
+  height: 40px;
+  background-color: rgba(201, 168, 76, 0.15);
+  border-radius: var(--radius-sm);
+  color: var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.life-card-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.life-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.life-card-title {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0;
+}
+
+.life-card-desc {
+  font-size: 0.9rem;
+  color: var(--text-body);
+  line-height: 1.5;
+}
+
+/* ─── Safe Learning Environment Section ───────────────── */
+#safe-environment {
+  background-color: var(--primary-dark);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+#safe-environment .section-title {
+  color: var(--text-white);
+}
+
+#safe-environment .section-subtitle {
+  color: var(--text-light);
+}
+
+.safety-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+.safety-block {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 36px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.safety-icon-wrap {
+  width: 64px;
+  height: 64px;
+  background-color: rgba(201, 168, 76, 0.12);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: var(--radius-md);
+  color: var(--gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.safety-icon-wrap svg {
+  width: 32px;
+  height: 32px;
+}
+
+.safety-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-white);
+  margin-bottom: 14px;
+}
+
+.safety-desc {
+  font-size: 0.92rem;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+/* ─── Visit Campus Section ───────────────────────────── */
+#visit-campus {
+  background-color: var(--cream);
+  text-align: center;
+  position: relative;
+}
+
+.visit-inner {
+  max-width: 700px;
+  margin-inline: auto;
+}
+
+.visit-inner p {
+  font-size: 1.05rem;
+  color: var(--text-body);
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.visit-btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ─── Responsive Media Queries ──────────────────────── */
+
+@media (max-width: 991px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .grid-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .safety-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .feat-row {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .feat-row-reverse {
+    grid-template-columns: 1fr;
+  }
+
+  /* Make reversed item image stack first visually */
+  .feat-row-reverse .feat-image-wrap {
+    order: -1;
+  }
+
+  .split-layout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+@media (max-width: 767px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .safety-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .visit-btn-group .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

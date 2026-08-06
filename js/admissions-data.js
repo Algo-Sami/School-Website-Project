@@ -112,6 +112,11 @@
     const timelineItems = document.querySelectorAll('.process-step');
     if (!timelineItems.length) return;
 
+    if (!('IntersectionObserver' in window)) {
+      timelineItems.forEach(item => item.classList.add('visible'));
+      return;
+    }
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {

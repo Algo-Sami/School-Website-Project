@@ -121,6 +121,8 @@
       // Dot indicator
       const dot = document.createElement('button');
       dot.className = 'hero-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('role', 'tab');
+      dot.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
       dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
       dot.addEventListener('click', () => goToSlide(i));
       dotsContainer.appendChild(dot);
@@ -162,7 +164,9 @@
     incoming.classList.add('active');
 
     dotEls[currentIndex].classList.remove('active');
+    dotEls[currentIndex].setAttribute('aria-selected', 'false');
     dotEls[idx].classList.add('active');
+    dotEls[idx].setAttribute('aria-selected', 'true');
 
     updateContent(idx);
     currentIndex = idx;
