@@ -10,7 +10,7 @@
     statistics: [
       {
         id: 'faculty-stat-educators',
-        target: 50,
+        target: 100,
         suffix: '+',
         label: 'Dedicated Educators',
         temporary: true
@@ -31,7 +31,7 @@
       },
       {
         id: 'faculty-stat-students',
-        target: 1000,
+        target: 2000,
         suffix: '+',
         formatComma: true,
         label: 'Students Supported',
@@ -50,13 +50,13 @@
     members: [
       {
         id: 'faculty-001',
-        name: 'Dr. Tariq Mahmood',
-        role: 'Principal / Admin Lead',
+        name: 'Shamim Akhtar',
+        role: 'Principal',
         department: 'Administration',
         subject: 'Educational Leadership',
-        experience: '20+ Years Experience',
-        bio: 'Dedicated to fostering a premium learning environment combining traditional values with modern scientific education.',
-        image: null, // Fallback placeholder
+        experience: '30+ Years Experience',
+        bio: 'Dedicated to fostering academic excellence, moral integrity, and modern secondary education in Attock.',
+        image: 'assets/images/principal_shamim.png',
         category: 'ADMINISTRATION',
         featured: true
       },

@@ -1,10 +1,9 @@
 /**
- * intro.js  —  Scroll-Driven Brand Experience v2
+ * intro.js - Scroll-Driven Brand Experience (Prologue)
  * Ashraf Islamia Model Public Secondary School
  *
- * Phase A  0 – 80 %   Candle lighting sequence
- * Phase B 80 – 90 %   SVG candles crossfade into school logo (large, centred)
- * Phase C 90 – 100 %  Logo journeys to navbar; homepage dawns behind it
+ * Uses native browser scrolling (window.scrollY) so the animation works
+ * on all devices, trackpads, touch screens, and automated test runners.
  *
  * Dispatches: 'intro:complete' CustomEvent on document when done.
  */
@@ -13,20 +12,11 @@
   'use strict';
 
   const SESSION_KEY     = 'aimps_intro_shown';
-  const PARTICLES_COUNT = 8;
+  const PARTICLES_COUNT = 5;
   function markShown() { sessionStorage.setItem(SESSION_KEY, '1'); }
   function setPhase(overlay, phase) { overlay.dataset.phase = phase; }
   function dispatch(name) {
     document.dispatchEvent(new CustomEvent(name, { bubbles: true }));
-  }
-
-  /* ── Easing helpers ── */
-  function clamp01(t) { return Math.max(0, Math.min(1, t)); }
-  function smoothstep(t)     { t = clamp01(t); return t * t * (3 - 2 * t); }
-  function easeOutCubic(t)   { return 1 - Math.pow(1 - clamp01(t), 3); }
-  function easeInOutCubic(t) {
-    t = clamp01(t);
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
   /* ── Particle System ── */
@@ -40,7 +30,6 @@
     function spawnParticle() {
       const origin = getFlamePos();
       if (!origin) return;
-      // slightly wider spread for bloom effect
       const angle = (Math.random() - 0.5) * 0.3;
       const speed = 0.3 + Math.random() * 0.5;
       particles.push({
@@ -86,222 +75,194 @@
 
   /* ── Scroll Render Engine ── */
   function render(pct, n) {
+    // Phase adjustment
+    if      (pct < 5)   setPhase(n.overlay, 'silhouettes');
+    else if (pct < 94)  setPhase(n.overlay, 'lighting');
+    else if (pct < 100) setPhase(n.overlay, 'stable');
+    else                setPhase(n.overlay, 'exiting');
 
-    // Phase label
-    if      (pct < 5)  setPhase(n.overlay, 'silhouettes');
-    else if (pct < 80) setPhase(n.overlay, 'lighting');
-    else if (pct < 90) setPhase(n.overlay, 'transforming');
-    else               setPhase(n.overlay, 'journeying');
-
-    // ═══════════════════════════════════════════════════════
-    // PHASE A  —  Candle Lighting  (scroll 0 → 80 %)
-    // Remap 0-80% scroll → candlePct 0-100 so original
-    // candle thresholds remain unchanged.
-    // ═══════════════════════════════════════════════════════
-    var candlePct = pct >= 80 ? 100 : (pct / 80) * 100;
-
-    [n.c1, n.c2, n.c3, n.c4].forEach(function(c) { if(c) c.classList.remove('lit'); });
+    // Reset lit class on vertical candles - Candle 5 starts lit
+    [n.c1, n.c2, n.c3, n.c4].forEach(function(c) {
+      if(c) c.classList.remove('lit');
+    });
     if (n.c5) n.c5.classList.add('lit');
 
-    // Candle 5 brightens
-    var s5 = candlePct <= 15 ? 1.0 + (candlePct / 15) * 0.4 : 1.4;
-    if (n.f5) { n.f5.style.transform = 'scale(' + s5 + ')'; n.f5.style.opacity = '1'; }
+    // ─── 0% to 15%: Candle 5 grows brighter (scale 1.0 -> 1.4) ───
+    var s5 = 1.0;
+    if (pct <= 15) {
+      s5 = 1.0 + (pct / 15) * 0.4;
+    } else {
+      s5 = 1.4;
+    }
+    if (n.f5) {
+      n.f5.style.transform = 'scale(' + s5 + ')';
+      n.f5.style.opacity = '1';
+    }
 
-    // Candle 5 lean
+    // Leaning behavior for Candle 5 to reach Candle 4 wick (15% -> 25% lean, 36% -> 40% return)
     var rot5 = -32;
-    if      (candlePct > 15 && candlePct <= 25) rot5 = -32 - ((candlePct - 15) / 10) * 12;
-    else if (candlePct > 25 && candlePct <= 36) rot5 = -44;
-    else if (candlePct > 36 && candlePct <= 40) rot5 = -44 + ((candlePct - 36) / 4) * 12;
-    if (n.c5) n.c5.style.transform = 'rotate(' + rot5 + 'deg)';
+    if (pct > 15 && pct <= 25) {
+      rot5 = -32 - ((pct - 15) / 10) * 12; // leans from -32 to -44
+    } else if (pct > 25 && pct <= 36) {
+      rot5 = -44; // holds touch briefly
+    } else if (pct > 36 && pct <= 40) {
+      rot5 = -44 + ((pct - 36) / 4) * 12; // returns to -32
+    }
+    if (n.c5) {
+      n.c5.style.transform = 'rotate(' + rot5 + 'deg)';
+    }
 
-    // Candle 4
+    // ─── 25%: Candle 4 ignites (25% -> 36% grow to 1.0) ───
     var s4 = 0;
-    if      (candlePct > 25 && candlePct <= 36) s4 = (candlePct - 25) / 11;
-    else if (candlePct > 36) s4 = 1.0;
-    if (n.f4) { n.f4.style.transform = 'scale(' + s4 + ')'; n.f4.style.opacity = s4; }
+    if (pct > 25 && pct <= 36) {
+      s4 = (pct - 25) / 11;
+    } else if (pct > 36) {
+      s4 = 1.0;
+    }
+    if (n.f4) {
+      n.f4.style.transform = 'scale(' + s4 + ')';
+      n.f4.style.opacity = s4;
+    }
     if (s4 > 0.1 && n.c4) n.c4.classList.add('lit');
 
-    // Candle 3
+    // ─── 40%: Candle 3 lights (40% -> 52% grow to 1.0) ───
     var s3 = 0;
-    if      (candlePct > 40 && candlePct <= 52) s3 = (candlePct - 40) / 12;
-    else if (candlePct > 52) s3 = 1.0;
-    if (n.f3) { n.f3.style.transform = 'scale(' + s3 + ')'; n.f3.style.opacity = s3; }
+    if (pct > 40 && pct <= 52) {
+      s3 = (pct - 40) / 12;
+    } else if (pct > 52) {
+      s3 = 1.0;
+    }
+    if (n.f3) {
+      n.f3.style.transform = 'scale(' + s3 + ')';
+      n.f3.style.opacity = s3;
+    }
     if (s3 > 0.1 && n.c3) n.c3.classList.add('lit');
 
-    // Candle 2
+    // ─── 60%: Candle 2 lights (60% -> 72% grow to 1.0) ───
     var s2 = 0;
-    if      (candlePct > 60 && candlePct <= 72) s2 = (candlePct - 60) / 12;
-    else if (candlePct > 72) s2 = 1.0;
-    if (n.f2) { n.f2.style.transform = 'scale(' + s2 + ')'; n.f2.style.opacity = s2; }
+    if (pct > 60 && pct <= 72) {
+      s2 = (pct - 60) / 12;
+    } else if (pct > 72) {
+      s2 = 1.0;
+    }
+    if (n.f2) {
+      n.f2.style.transform = 'scale(' + s2 + ')';
+      n.f2.style.opacity = s2;
+    }
     if (s2 > 0.1 && n.c2) n.c2.classList.add('lit');
 
-    // Candle 1
+    // ─── 80%: Candle 1 lights (80% -> 92% grow to 1.0) ───
     var s1 = 0;
-    if      (candlePct > 80 && candlePct <= 92) s1 = (candlePct - 80) / 12;
-    else if (candlePct > 92) s1 = 1.0;
-    if (n.f1) { n.f1.style.transform = 'scale(' + s1 + ')'; n.f1.style.opacity = s1; }
+    if (pct > 80 && pct <= 92) {
+      s1 = (pct - 80) / 12;
+    } else if (pct > 92) {
+      s1 = 1.0;
+    }
+    if (n.f1) {
+      n.f1.style.transform = 'scale(' + s1 + ')';
+      n.f1.style.opacity = s1;
+    }
     if (s1 > 0.1 && n.c1) n.c1.classList.add('lit');
 
+    // Count how many candles are lit to drive motto reveal & ambient warmth
     var litCount = 1 + (s4 > 0.5 ? 1 : 0) + (s3 > 0.5 ? 1 : 0) + (s2 > 0.5 ? 1 : 0) + (s1 > 0.5 ? 1 : 0);
+    
+    // Motto reveal by candlelight: starts at 0.2, reaches 1.0 when all lit
+    if (n.motto) {
+      var mottoOpacity = 0.2 + (litCount - 1) * 0.2;
+      n.motto.style.opacity = Math.min(1.0, mottoOpacity);
+    }
 
-    // Ambient glow maps to candlePct
-    var glowProgress = Math.min(100, candlePct) / 100;
-    if (pct < 90) {
-      if (n.bgAmbient) {
-        n.bgAmbient.style.opacity   = glowProgress * 0.85;
-        n.bgAmbient.style.transform = 'scale(' + (0.7 + glowProgress * 0.3) + ')';
-      }
-      if (n.candlesGlow) n.candlesGlow.style.opacity = 0.15 + glowProgress * 0.75;
+    // Ambient glow & floor reflection pooling maps organically to scroll progress
+    var glowProgress = Math.min(94, pct) / 94;
+    if (n.bgAmbient) {
+      n.bgAmbient.style.opacity = glowProgress * 0.85;
+      n.bgAmbient.style.transform = 'scale(' + (0.7 + glowProgress * 0.3) + ')';
+    }
+    if (n.candlesGlow) {
+      n.candlesGlow.style.opacity = 0.15 + glowProgress * 0.75;
     }
     if (n.floorScene) {
-      n.floorScene.style.opacity = pct < 80
-        ? 0.02 + glowProgress * 0.03
-        : Math.max(0, (1 - easeInOutCubic((pct - 80) / 10)) * 0.05);
+      n.floorScene.style.opacity = 0.02 + glowProgress * 0.03;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // PHASE B  —  Transform  (scroll 80 → 90 %)
-    // SVG candles compress & dissolve; school logo seal
-    // fades in at the same position. Text lifts and fades.
-    // ═══════════════════════════════════════════════════════
-    var tProg  = pct >= 80 ? Math.min(1, (pct - 80) / 10) : 0;
-    var tEased = easeInOutCubic(tProg);
-
-    // Show logo circle background at same time as logo fades in (no black flash)
-    if (pct >= 80) n.introWrap.classList.add('show-bg');
-    else           n.introWrap.classList.remove('show-bg');
-
-    // SVG candles: fade + compress into logo
-    if (pct < 80) {
-      if (n.wrap) { n.wrap.style.opacity = '1'; n.wrap.style.transform = 'scale(1)'; }
-    } else {
-      if (n.wrap) {
-        n.wrap.style.opacity   = Math.max(0, 1 - tEased * 1.25);
-        n.wrap.style.transform = 'scale(' + (1 - tEased * 0.1) + ')';
-      }
+    // ─── 94% to 100%: Dissolve & Morph ───
+    var m = 0;
+    if (pct >= 94) {
+      m = Math.min(1, (pct - 94) / 6);
     }
-
-    // School logo: scale 0.9 → 1.2 as it fades in
-    if (pct < 80) {
-      if (n.logoBg) { n.logoBg.style.opacity = '0'; n.logoBg.style.transform = 'scale(0.9)'; }
-    } else {
-      if (n.logoBg) {
-        n.logoBg.style.opacity   = Math.min(1, tEased * 1.25);
-        n.logoBg.style.transform = 'scale(' + (0.9 + tEased * 0.3) + ')';
-      }
-    }
-
-    // Keep introWrap at its normal scale during Phase B
-    if (jProg === 0) {
-      if (pct < 80) {
-        if (n.introWrap) n.introWrap.style.transform = 'none';
-      } else {
-        if (n.introWrap) n.introWrap.style.transform = 'scale(1)';
-      }
-    }
-
-    // Motto fades up during transform
-    if (n.motto) {
-      if (pct < 80) {
-        n.motto.style.opacity   = Math.min(1.0, 0.2 + (litCount - 1) * 0.2);
-        n.motto.style.transform = 'none';
-      } else {
-        n.motto.style.opacity   = Math.max(0, 1.0 - tEased * 2);
-        n.motto.style.transform = 'translateY(' + (-tEased * 14) + 'px)';
-      }
-    }
-
-    // Text group fades up
-    if (pct < 80) {
-      if (n.textGroup) { n.textGroup.style.opacity = '1'; n.textGroup.style.transform = 'none'; }
-    } else {
-      if (n.textGroup) {
-        var tf = Math.min(1, tEased * 1.7);
-        n.textGroup.style.opacity   = Math.max(0, 1 - tf);
-        n.textGroup.style.transform = 'translateY(' + (-tEased * 20) + 'px)';
-      }
-    }
-
-    // Golden bloom burst when ALL candles are fully lit
-    if (candlePct >= 92 && !n.bloomTriggered && n.bloomBurst) {
-      n.bloomTriggered = true;
-      n.bloomBurst.classList.add('active');
-      setTimeout(function () { if (n.bloomBurst) n.bloomBurst.classList.remove('active'); }, 1400);
-    }
-
-    // ═══════════════════════════════════════════════════════
-    // PHASE C  —  Journey  (scroll 90 → 100 %)
-    // School logo (the seal) flies from centre to navbar.
-    // Dark background dissolves → homepage dawns behind it.
-    // Navbar slides in as the logo settles.
-    // ═══════════════════════════════════════════════════════
-    var jProg  = pct >= 90 ? Math.min(1, (pct - 90) / 10) : 0;
-    var jEased = smoothstep(jProg);
 
     var mc = document.getElementById('main-content');
     var nb = document.getElementById('navbar');
 
-    if (jProg > 0) {
+    if (m > 0) {
+      if (n.introWrap) n.introWrap.classList.add('show-bg');
+      if (n.logoBg) n.logoBg.style.opacity = m;
+      if (n.textGroup) {
+        n.textGroup.style.opacity = 1 - m;
+        n.textGroup.style.transform = 'translateY(' + (-m * 20) + 'px)';
+      }
+      if (n.wrap) {
+        n.wrap.style.opacity = 1 - m;
+      }
+      if (n.floorScene) {
+        n.floorScene.style.opacity = (1 - m) * 0.05;
+      }
 
-      // Dissolve dark background layers → homepage shows through
-      var bgFade = easeOutCubic(jProg);
-      if (n.layerNavy)   n.layerNavy.style.opacity   = Math.max(0, 1    - bgFade);
-      if (n.layerGlow)   n.layerGlow.style.opacity   = Math.max(0, 1    - bgFade);
-      if (n.vignette)    n.vignette.style.opacity    = Math.max(0, 1    - bgFade);
-      if (n.bgAmbient)   n.bgAmbient.style.opacity   = Math.max(0, 0.85 - bgFade * 0.85);
-      if (n.candlesGlow) n.candlesGlow.style.opacity = Math.max(0, 0.9  - bgFade * 0.9);
-
-      // Logo journeys to navbar position
       if (n.navLogo && n.introWrap) {
         if (!cachedNavRect) {
-          var oldTransform = nb ? nb.style.transform : '';
-          if (nb) nb.style.transform = 'translateY(0)';
           cachedNavRect = n.navLogo.getBoundingClientRect();
-          if (nb) nb.style.transform = oldTransform;
         }
-        if (cachedIntroWrapWidth === null) cachedIntroWrapWidth = n.introWrap.offsetWidth || 280;
-        var r      = cachedNavRect;
-        var fromCX = window.innerWidth  / 2;
+        if (cachedIntroWrapWidth === null) {
+          cachedIntroWrapWidth = n.introWrap.offsetWidth || 240;
+        }
+        var r = cachedNavRect;
+        var fromCX = window.innerWidth / 2;
         var fromCY = window.innerHeight / 2 - (window.innerHeight * 0.02);
-        var toCX   = r.left + r.width  / 2;
-        var toCY   = r.top  + r.height / 2;
-        var dx       = (toCX - fromCX) * jEased;
-        var dy       = (toCY - fromCY) * jEased;
-        // Start at Phase B end scale (1.0) and shrink to navbar logo size
-        var navScale = (r.width || 46) / cachedIntroWrapWidth;
-        var sc       = 1 - jEased * (1 - navScale);
+        var toCX = r.left + r.width / 2;
+        var toCY = r.top + r.height / 2;
+
+        var dx = (toCX - fromCX) * m;
+        var dy = (toCY - fromCY) * m;
+        var targetWidth = r.width || 36;
+        var startWidth = cachedIntroWrapWidth;
+        var sc = 1 - m * (1 - targetWidth / startWidth);
+
         n.introWrap.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(' + sc + ')';
         n.introWrap.style.boxShadow = 'none';
-
-        // Scale logo image back to 1.0 (from 1.2) parallel to journey
-        if (n.logoBg) {
-          var logoScale = 1.2 - 0.2 * jEased;
-          n.logoBg.style.transform = 'scale(' + logoScale + ')';
-        }
       }
 
-      // Homepage dawns up from slightly below
       if (mc) {
-        mc.style.opacity    = String(jEased);
-        mc.style.visibility = 'visible';
-        mc.style.transform  = 'translateY(' + ((1 - jEased) * 28) + 'px)';
+        mc.style.opacity = m;
+        mc.style.visibility = m > 0 ? 'visible' : 'hidden';
+        mc.style.transform = 'translateY(' + ((1 - m) * 40) + 'px)';
       }
-
-      // Navbar slides in once logo is ~40% along its journey
-      var nbProg  = Math.max(0, (jProg - 0.4) / 0.6);
-      var nbEased = easeOutCubic(nbProg);
       if (nb) {
-        nb.style.opacity   = String(nbEased);
-        nb.style.transform = 'translateY(' + (-100 + nbEased * 100) + '%)';
+        nb.style.opacity = m;
+        nb.style.transform = 'translateY(' + (-100 + m * 100) + '%)';
       }
-
     } else {
-      // Before journey — introWrap handled by Phase B block above
-      if (n.layerNavy) n.layerNavy.style.opacity   = '';
-      if (n.layerGlow) n.layerGlow.style.opacity   = '';
-      if (n.vignette)  n.vignette.style.opacity    = '';
-      if (mc) { mc.style.opacity = '0'; mc.style.visibility = 'hidden'; mc.style.transform = 'translateY(28px)'; }
-      if (nb) { nb.style.opacity = '0'; nb.style.transform   = 'translateY(-100%)'; }
+      if (n.introWrap) {
+        n.introWrap.classList.remove('show-bg');
+        n.introWrap.style.transform = 'none';
+      }
+      if (n.logoBg) n.logoBg.style.opacity = 0;
+      if (n.textGroup) {
+        n.textGroup.style.opacity = 1;
+        n.textGroup.style.transform = 'none';
+      }
+      if (n.wrap) {
+        n.wrap.style.opacity = 1;
+      }
+      if (mc) {
+        mc.style.opacity = 0;
+        mc.style.visibility = 'hidden';
+        mc.style.transform = 'translateY(40px)';
+      }
+      if (nb) {
+        nb.style.opacity = 0;
+        nb.style.transform = 'translateY(-100%)';
+      }
     }
   }
 
@@ -366,14 +327,7 @@
       candlesGlow:overlay.querySelector('.intro-candles-glow'),
       navLogo:document.querySelector('.nav-logo-icon'),
       motto:overlay.querySelector('.intro-motto'),
-      floorScene:overlay.querySelector('.floor-scene'),
-      // Background layers dissolved in Phase C to reveal homepage
-      layerNavy:overlay.querySelector('.intro-layer-navy'),
-      layerGlow:overlay.querySelector('.intro-layer-glow'),
-      vignette:overlay.querySelector('.intro-vignette'),
-      // Golden bloom burst
-      bloomBurst:overlay.querySelector('.intro-bloom-burst'),
-      bloomTriggered:false
+      floorScene:overlay.querySelector('.floor-scene')
     };
     n.f1=n.c1?n.c1.querySelector('.flame-g'):null;
     n.f2=n.c2?n.c2.querySelector('.flame-g'):null;

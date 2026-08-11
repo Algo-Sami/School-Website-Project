@@ -9,9 +9,9 @@
 
   const COUNTER_CONFIG = [
     { id: 'stat-years',    target: 30,   suffix: '+',  duration: 1800 },
-    { id: 'stat-students', target: 1200, suffix: '+',  duration: 2000 },
-    { id: 'stat-teachers', target: 68,   suffix: '+',  duration: 1600 },
-    { id: 'stat-success',  target: 98,   suffix: '%',  duration: 1900 },
+    { id: 'stat-students', target: 2000, suffix: '+',  duration: 2000 },
+    { id: 'stat-teachers', target: 100,  suffix: '+',  duration: 1600 },
+    { id: 'stat-success',  target: 90,   suffix: '%',  duration: 1900 },
   ];
 
   function easeOutCubic(t) {

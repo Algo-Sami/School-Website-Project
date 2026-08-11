@@ -52,7 +52,7 @@
     "url": "https://www.aimpschool.com/",
     "logo": {
       "@type": "ImageObject",
-      "url": "https://www.aimpschool.com/assets/images/school_logo.jpg",
+      "url": "https://www.aimpschool.com/assets/images/school_logo.png",
       "width": 180,
       "height": 180
     },
@@ -134,7 +134,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&amp;family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&amp;family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&amp;family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&amp;family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" />
   <link rel="preload" as="image" href="assets/images/hero_building.png" fetchpriority="high" />
 
   <!-- ─── Stylesheets ───────────────────────────────── -->
@@ -167,6 +168,9 @@
     <div class="intro-candles-glow" aria-hidden="true"></div>
     <div class="intro-vignette" aria-hidden="true"></div>
 
+    <!-- ── Golden bloom burst (fires once all candles lit) ── -->
+    <div class="intro-bloom-burst" aria-hidden="true"></div>
+
     <!-- ── Golden dust particles ── -->
     <canvas id="intro-particles" aria-hidden="true"></canvas>
 
@@ -178,7 +182,7 @@
 
         <!-- Woodcut image — revealed only during transformation -->
         <div class="intro-logo-bg-image" aria-hidden="true">
-          <img src="assets/images/school_logo.jpg" alt="" class="intro-logo-img" width="240" height="240"
+          <img src="assets/images/school_logo.png" alt="" class="intro-logo-img" width="240" height="240"
             decoding="async" loading="eager" />
         </div>
 
@@ -437,7 +441,7 @@
     <nav id="navbar" role="navigation" aria-label="Main navigation">
       <!-- Logo -->
       <a href="/" class="nav-logo" aria-label="Ashraf Islamia Model Public Secondary School — Home">
-        <img src="assets/images/school_logo.jpg" alt="" class="nav-logo-icon" aria-hidden="true" width="46" height="46"
+        <img src="assets/images/school_logo.png" alt="" class="nav-logo-icon" aria-hidden="true" width="46" height="46"
           decoding="async" loading="eager" fetchpriority="high" />
 
         <div class="nav-logo-text">
@@ -488,7 +492,7 @@
         <!-- Drawer header: branding + close -->
         <div class="nav-drawer-header">
           <a href="/" class="nav-drawer-logo" aria-label="Home">
-            <img src="assets/images/school_logo.jpg" alt="" class="nav-drawer-logo-icon" aria-hidden="true" width="44"
+            <img src="assets/images/school_logo.png" alt="" class="nav-drawer-logo-icon" aria-hidden="true" width="44"
               height="44" decoding="async" loading="lazy" />
             <span class="nav-drawer-school-name">Ashraf Islamia<br>Model Public SS</span>
           </a>
@@ -500,7 +504,8 @@
         <div class="nav-drawer-links">
           <a href="#hero" class="nav-link" tabindex="-1">Home <span class="nav-link-arrow">›</span></a>
           <a href="/about" class="nav-link" tabindex="-1">About <span class="nav-link-arrow">›</span></a>
-          <a href="/facilities" class="nav-link" tabindex="-1">Facilities <span class="nav-link-arrow">&#8250;</span></a>
+          <a href="/facilities" class="nav-link" tabindex="-1">Facilities <span
+              class="nav-link-arrow">&#8250;</span></a>
           <a href="/faculty" class="nav-link" tabindex="-1">Faculty <span class="nav-link-arrow">›</span></a>
           <a href="/admissions" class="nav-link" tabindex="-1">Admissions <span class="nav-link-arrow">›</span></a>
           <a href="/gallery" class="nav-link" tabindex="-1">Gallery <span class="nav-link-arrow">›</span></a>
@@ -603,21 +608,21 @@
 
           <div class="stat-item reveal">
             <span class="stat-number" id="stat-students">
-              1200<span class="stat-suffix">+</span>
+              2000<span class="stat-suffix">+</span>
             </span>
             <span class="stat-label">Students<br>Enrolled</span>
           </div>
 
           <div class="stat-item reveal">
             <span class="stat-number" id="stat-teachers">
-              68<span class="stat-suffix">+</span>
+              100<span class="stat-suffix">+</span>
             </span>
             <span class="stat-label">Qualified<br>Educators</span>
           </div>
 
           <div class="stat-item reveal">
             <span class="stat-number" id="stat-success">
-              98<span class="stat-suffix">%</span>
+              90<span class="stat-suffix">%</span>
             </span>
             <span class="stat-label">Board Exam<br>Success Rate</span>
           </div>
@@ -829,29 +834,8 @@
 
           <!-- Portrait -->
           <div class="principal-portrait reveal">
-            <div class="principal-avatar" aria-label="Principal's portrait illustration">
-              <!-- Elegant person silhouette SVG -->
-              <svg class="principal-avatar-svg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true">
-                <!-- Head -->
-                <circle cx="60" cy="38" r="20" fill="rgba(201,168,76,0.3)" stroke="rgba(201,168,76,0.6)"
-                  stroke-width="1.5" />
-                <!-- Turban / hat suggestion -->
-                <path d="M42 35 Q60 18 78 35" stroke="rgba(201,168,76,0.5)" stroke-width="2" fill="none" />
-                <!-- Face features (minimal) -->
-                <circle cx="54" cy="37" r="2" fill="rgba(201,168,76,0.6)" />
-                <circle cx="66" cy="37" r="2" fill="rgba(201,168,76,0.6)" />
-                <path d="M55 45 Q60 49 65 45" stroke="rgba(201,168,76,0.5)" stroke-width="1.5" fill="none"
-                  stroke-linecap="round" />
-                <!-- Beard -->
-                <path d="M48 48 Q60 60 72 48" stroke="rgba(201,168,76,0.3)" stroke-width="1.5"
-                  fill="rgba(201,168,76,0.05)" />
-                <!-- Body / shoulders -->
-                <path d="M30 120 Q32 76 48 68 Q60 64 72 68 Q88 76 90 120" fill="rgba(201,168,76,0.15)"
-                  stroke="rgba(201,168,76,0.3)" stroke-width="1.2" />
-                <!-- Collar detail -->
-                <path d="M54 68 L60 80 L66 68" stroke="rgba(201,168,76,0.4)" stroke-width="1" fill="none" />
-              </svg>
+            <div class="principal-avatar" aria-label="Principal Shamim Akhtar Portrait">
+              <img src="assets/images/principal_shamim.png" alt="Principal Shamim Akhtar" width="200" height="200" decoding="async" loading="lazy" />
             </div>
           </div>
 
@@ -929,7 +913,7 @@
         <!-- Brand column -->
         <div class="footer-brand">
           <a href="/" class="footer-logo" aria-label="Go to top — Ashraf Islamia MPSS">
-            <img src="assets/images/school_logo.jpg" alt="" class="footer-logo-icon" aria-hidden="true" width="42"
+            <img src="assets/images/school_logo.png" alt="" class="footer-logo-icon" aria-hidden="true" width="42"
               height="42" decoding="async" loading="lazy" />
             <span class="footer-school-name">Ashraf Islamia<br>Model Public Secondary School</span>
           </a>

@@ -53,7 +53,7 @@
       },
       {
         id: "about-stat-students",
-        target: 1200,
+        target: 2000,
         suffix: "+",
         formatComma: true,
         label: "STUDENTS",
@@ -61,7 +61,7 @@
       },
       {
         id: "about-stat-teachers",
-        target: 80,
+        target: 100,
         suffix: "+",
         label: "FACULTY MEMBERS",
         temporary: true
