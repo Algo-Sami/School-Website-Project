@@ -83,7 +83,7 @@
   let resizeHandler = null;
   let keydownHandler = null;
   let cachedNavRect = null;
-  let cachedIntroWrapWidth = null;
+  let cachedIntroStartRect = null;
 
   /* ── Scroll Render Engine ── */
   function render(pct, n) {
@@ -169,8 +169,7 @@
 
     // ═══════════════════════════════════════════════════════
     // PHASE B  —  Transform  (scroll 80 → 90 %)
-    // SVG candles compress & dissolve; school logo seal
-    // fades in at the same position. Text lifts and fades.
+    // SVG candles dissolve into wooden seal candles seamlessly.
     // ═══════════════════════════════════════════════════════
     var tProg  = pct >= 80 ? Math.min(1, (pct - 80) / 10) : 0;
     var tEased = easeInOutCubic(tProg);
@@ -179,27 +178,27 @@
     if (pct >= 80) n.introWrap.classList.add('show-bg');
     else           n.introWrap.classList.remove('show-bg');
 
-    // SVG candles: fade + compress into logo
+    // SVG candles: fade + settle into logo candles
     if (pct < 80) {
-      if (n.wrap) { n.wrap.style.opacity = '1'; n.wrap.style.transform = 'scale(1)'; }
+      if (n.wrap) { n.wrap.style.opacity = '1'; n.wrap.style.transform = 'translateY(-2%) scale(1)'; }
     } else {
       if (n.wrap) {
         n.wrap.style.opacity   = Math.max(0, 1 - tEased * 1.25);
-        n.wrap.style.transform = 'scale(' + (1 - tEased * 0.1) + ')';
+        n.wrap.style.transform = 'translateY(-2%) scale(' + (1 - tEased * 0.05) + ')';
       }
     }
 
-    // School logo: scale 0.9 → 1.2 as it fades in
+    // School logo seal: 1:1 scale alignment with SVG candles
     if (pct < 80) {
-      if (n.logoBg) { n.logoBg.style.opacity = '0'; n.logoBg.style.transform = 'scale(0.9)'; }
+      if (n.logoBg) { n.logoBg.style.opacity = '0'; n.logoBg.style.transform = 'scale(1)'; }
     } else {
       if (n.logoBg) {
         n.logoBg.style.opacity   = Math.min(1, tEased * 1.25);
-        n.logoBg.style.transform = 'scale(' + (0.9 + tEased * 0.3) + ')';
+        n.logoBg.style.transform = 'scale(1)';
       }
     }
 
-    // Keep introWrap at its normal scale during Phase B (only when Phase C hasn't started)
+    // Keep introWrap at normal scale during Phase B
     if (jProg === 0) {
       if (pct < 80) {
         if (n.introWrap) n.introWrap.style.transform = 'none';
@@ -239,10 +238,9 @@
 
     // ═══════════════════════════════════════════════════════
     // PHASE C  —  Journey  (scroll 90 → 100 %)
-    // School logo (the seal) flies from centre to navbar.
+    // School logo seal flies from centre to navbar.
     // Dark background dissolves → homepage dawns behind it.
     // Navbar slides in as the logo settles.
-    // (jProg & jEased already computed above Phase B)
     // ═══════════════════════════════════════════════════════
 
     var mc = document.getElementById('main-content');
@@ -258,32 +256,42 @@
       if (n.bgAmbient)   n.bgAmbient.style.opacity   = Math.max(0, 0.85 - bgFade * 0.85);
       if (n.candlesGlow) n.candlesGlow.style.opacity = Math.max(0, 0.9  - bgFade * 0.9);
 
-      // Logo journeys to navbar position
+      // Logo journeys with pixel-perfect accuracy to navbar position
       if (n.navLogo && n.introWrap) {
         if (!cachedNavRect) {
-          var oldTransform = nb ? nb.style.transform : '';
+          var oldNbTransform = nb ? nb.style.transform : '';
           if (nb) nb.style.transform = 'translateY(0)';
           cachedNavRect = n.navLogo.getBoundingClientRect();
-          if (nb) nb.style.transform = oldTransform;
+          if (nb) nb.style.transform = oldNbTransform;
         }
-        if (cachedIntroWrapWidth === null) cachedIntroWrapWidth = n.introWrap.offsetWidth || 280;
-        var r      = cachedNavRect;
-        var fromCX = window.innerWidth  / 2;
-        var fromCY = window.innerHeight / 2 - (window.innerHeight * 0.02);
-        var toCX   = r.left + r.width  / 2;
-        var toCY   = r.top  + r.height / 2;
-        var dx       = (toCX - fromCX) * jEased;
-        var dy       = (toCY - fromCY) * jEased;
-        // Start at Phase B end scale (1.0) and shrink to navbar logo size
-        var navScale = (r.width || 46) / cachedIntroWrapWidth;
-        var sc       = 1 - jEased * (1 - navScale);
+
+        if (!cachedIntroStartRect) {
+          var oldIntroTransform = n.introWrap.style.transform;
+          n.introWrap.style.transform = 'none';
+          cachedIntroStartRect = n.introWrap.getBoundingClientRect();
+          n.introWrap.style.transform = oldIntroTransform;
+        }
+
+        var r = cachedNavRect;
+        var s = cachedIntroStartRect;
+
+        var startCX = s.left + s.width / 2;
+        var startCY = s.top + s.height / 2;
+        var targetCX = r.left + r.width / 2;
+        var targetCY = r.top + r.height / 2;
+
+        var dx = (targetCX - startCX) * jEased;
+        var dy = (targetCY - startCY) * jEased;
+
+        // Scale from grand seal size down to navbar logo icon size
+        var navScale = (r.width || 46) / (s.width || 380);
+        var sc = 1 - jEased * (1 - navScale);
+
         n.introWrap.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(' + sc + ')';
         n.introWrap.style.boxShadow = 'none';
 
-        // Scale logo image back to 1.0 (from 1.2) parallel to journey
         if (n.logoBg) {
-          var logoScale = 1.2 - 0.2 * jEased;
-          n.logoBg.style.transform = 'scale(' + logoScale + ')';
+          n.logoBg.style.transform = 'scale(1)';
         }
       }
 
@@ -333,7 +341,7 @@
       keydownHandler = null;
     }
     cachedNavRect = null;
-    cachedIntroWrapWidth = null;
+    cachedIntroStartRect = null;
     markShown();
     // Clear any inline styles set by render() so CSS class-based rules can take effect
     var mc=document.getElementById('main-content');
@@ -481,7 +489,7 @@
 
     resizeHandler = function onResize() {
       cachedNavRect = null;
-      cachedIntroWrapWidth = null;
+      cachedIntroStartRect = null;
       var sp = document.getElementById('prologue-spacer');
       if (sp) {
         sp.style.height = (window.innerHeight * 1.5) + 'px';

@@ -650,8 +650,8 @@ body.prologue-active #prologue-spacer {
 
 /* ── Logo Wrap ── */
 .intro-logo-wrap {
-  width: min(240px, 60vw);
-  height: min(240px, 60vw);
+  width: min(310px, 75vw);
+  height: min(310px, 75vw);
   border-radius: 50%;
   position: relative;
   display: flex;
@@ -733,8 +733,9 @@ body.prologue-active #prologue-spacer {
 /* ── SVG Candle Wrapper ── */
 .intro-candles-wrap {
   position: absolute;
-  width: 120%;
-  height: 98%;
+  width: 82%;
+  height: 68%;
+  transform: translateY(-2%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2575,13 +2576,14 @@ address {
 
 /* Logo wrap proportional */
 .intro-logo-wrap {
-  width: min(200px, 52vw);
-  height: min(200px, 52vw);
+  width: min(250px, 68vw);
+  height: min(250px, 68vw);
 }
 
 .intro-candles-wrap {
-  width: calc(min(200px, 52vw) * 1.6);
-  height: calc(min(200px, 52vw) * 1.3);
+  width: 82%;
+  height: 68%;
+  transform: translateY(-2%);
 }
 
 /* Remove upward offset — center properly on mobile */
@@ -2700,8 +2702,9 @@ address {
   }
 
   .intro-candles-wrap {
-    width: calc(min(210px, 50vw) * 1.6);
-    height: calc(min(210px, 50vw) * 1.3);
+    width: 82%;
+    height: 68%;
+    transform: translateY(-2%);
   }
 
   .stat-number {
@@ -2782,13 +2785,14 @@ address {
 
   /* Intro */
   .intro-logo-wrap {
-    width: min(220px, 46vw);
-    height: min(220px, 46vw);
+    width: min(270px, 62vw);
+    height: min(270px, 62vw);
   }
 
   .intro-candles-wrap {
-    width: calc(min(220px, 46vw) * 1.6);
-    height: calc(min(220px, 46vw) * 1.3);
+    width: 82%;
+    height: 68%;
+    transform: translateY(-2%);
   }
 
   .intro-motto {
@@ -3061,13 +3065,14 @@ address {
 
   /* Intro — tablet */
   .intro-logo-wrap {
-    width: min(230px, 30vw);
-    height: min(230px, 30vw);
+    width: min(290px, 40vw);
+    height: min(290px, 40vw);
   }
 
   .intro-candles-wrap {
-    width: calc(min(230px, 30vw) * 1.6);
-    height: calc(min(230px, 30vw) * 1.3);
+    width: 82%;
+    height: 68%;
+    transform: translateY(-2%);
   }
 
   .intro-center-stage {
@@ -3228,13 +3233,14 @@ address {
 
   /* Intro */
   .intro-logo-wrap {
-    width: min(240px, 26vw);
-    height: min(240px, 26vw);
+    width: min(305px, 36vw);
+    height: min(305px, 36vw);
   }
 
   .intro-candles-wrap {
-    width: calc(min(240px, 26vw) * 1.6);
-    height: calc(min(240px, 26vw) * 1.3);
+    width: 82%;
+    height: 68%;
+    transform: translateY(-2%);
   }
 
   .intro-motto {
@@ -3370,13 +3376,14 @@ address {
 
   /* Intro */
   .intro-logo-wrap {
-    width: min(240px, 22vw);
-    height: min(240px, 22vw);
+    width: min(315px, 30vw);
+    height: min(315px, 30vw);
   }
 
   .intro-candles-wrap {
-    width: calc(min(240px, 22vw) * 1.6);
-    height: calc(min(240px, 22vw) * 1.3);
+    width: 82%;
+    height: 68%;
+    transform: translateY(-2%);
   }
 
   .intro-motto {
@@ -3505,13 +3512,14 @@ address {
 
   /* Intro */
   .intro-logo-wrap {
-    width: 240px;
-    height: 240px;
+    width: 325px;
+    height: 325px;
   }
 
   .intro-candles-wrap {
-    width: calc(240px * 1.6);
-    height: calc(240px * 1.3);
+    width: 82%;
+    height: 68%;
+    transform: translateY(-2%);
   }
 
   .intro-motto {
@@ -3588,13 +3596,14 @@ address {
 
   /* Intro */
   .intro-logo-wrap {
-    width: 260px;
-    height: 260px;
+    width: 340px;
+    height: 340px;
   }
 
   .intro-candles-wrap {
-    width: calc(260px * 1.6);
-    height: calc(260px * 1.3);
+    width: 82%;
+    height: 68%;
+    transform: translateY(-2%);
   }
 
   .intro-motto {
@@ -3617,13 +3626,14 @@ address {
 @media (max-height: 560px) and (orientation: landscape) {
   /* Intro — compact for landscape phones */
   .intro-logo-wrap {
-    width: min(130px, 22vh);
-    height: min(130px, 22vh);
+    width: min(150px, 30vh);
+    height: min(150px, 30vh);
   }
 
   .intro-candles-wrap {
-    width: calc(min(130px, 22vh) * 1.6);
-    height: calc(min(130px, 22vh) * 1.3);
+    width: 82%;
+    height: 68%;
+    transform: translateY(-2%);
   }
 
   .intro-center-stage {
