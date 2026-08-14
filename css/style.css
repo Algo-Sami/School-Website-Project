@@ -79,7 +79,8 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
+  scroll-padding-top: var(--navbar-height, 72px);
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
   overflow-x: hidden;
@@ -519,7 +520,7 @@ body.prologue-active {
 
 body.prologue-active #prologue-spacer {
   display: block;
-  height: 100vh;
+  height: 150vh;
 }
 
 /* ── Base Overlay ── */

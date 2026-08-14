@@ -42,7 +42,7 @@
       sub: 'Our students consistently achieve excellence in academics, competitions, and life — a testament to our institutional commitment.',
     },
     {
-      image: 'assets/images/hero_sports.png',
+      image: 'assets/images/hero_sports_original.jpg',
       label: 'Body, Mind & Spirit',
       headline: 'Champions in<br>Every <em>Arena</em>',
       sub: 'Sport teaches discipline, teamwork, and resilience. Our students compete with distinction both on and off the field.',

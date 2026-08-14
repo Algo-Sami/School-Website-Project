@@ -176,15 +176,127 @@
     });
   }
 
-  // ── Smooth Scroll for Anchor Links ──────────────────────────
+  // ── Global Smooth Momentum Scroll Controller ─────────────────
 
-  function initSmoothScroll() {
+  function initSmoothPageScroll() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    let isScrolling = false;
+    let targetY = window.scrollY;
+    let currentY = window.scrollY;
+    let animId = null;
+
+    function clampScroll(y) {
+      const maxScroll = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight
+      );
+      return Math.max(0, Math.min(y, maxScroll));
+    }
+
+    function syncScroll() {
+      if (!isScrolling) {
+        currentY = window.scrollY;
+        targetY = window.scrollY;
+      }
+    }
+    window.addEventListener('scroll', syncScroll, { passive: true });
+
+    function lerp(start, end, factor) {
+      return start + (end - start) * factor;
+    }
+
+    function scrollLoop() {
+      currentY = lerp(currentY, targetY, 0.12);
+
+      if (Math.abs(targetY - currentY) < 0.5) {
+        currentY = targetY;
+        window.scrollTo(0, Math.round(currentY));
+        isScrolling = false;
+        animId = null;
+        return;
+      }
+
+      window.scrollTo(0, Math.round(currentY));
+      animId = requestAnimationFrame(scrollLoop);
+    }
+
+    function onWheel(e) {
+      // Allow intro or open drawer to handle their own scrolling
+      if (
+        document.body.classList.contains('prologue-active') ||
+        document.getElementById('nav-drawer')?.classList.contains('open')
+      ) {
+        return;
+      }
+
+      // Allow native horizontal scrolling for slider/filter containers
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        return;
+      }
+
+      // Respect scrollable nested elements (modals, dropdown lists, text areas)
+      let el = e.target;
+      while (el && el !== document.body && el !== document.documentElement) {
+        const overflowY = window.getComputedStyle(el).overflowY;
+        if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+          const canScrollDown = e.deltaY > 0 && el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+          const canScrollUp = e.deltaY < 0 && el.scrollTop > 1;
+          if (canScrollDown || canScrollUp) return;
+        }
+        el = el.parentElement;
+      }
+
+      e.preventDefault();
+
+      if (!isScrolling) {
+        currentY = window.scrollY;
+        targetY = window.scrollY;
+      }
+
+      isScrolling = true;
+
+      let delta = e.deltaY;
+      if (e.deltaMode === 1) {
+        delta *= 32; // Firefox line mode
+      } else if (e.deltaMode === 2) {
+        delta *= window.innerHeight; // Page mode
+      }
+
+      // Moderate impulse so it never scrolls too fast or too slow
+      const maxStep = 130;
+      const clampedDelta = Math.sign(delta) * Math.min(Math.abs(delta) * 0.85, maxStep);
+
+      targetY = clampScroll(targetY + clampedDelta);
+
+      if (!animId) {
+        animId = requestAnimationFrame(scrollLoop);
+      }
+    }
+
+    window.addEventListener('wheel', onWheel, { passive: false });
+
+    // Smooth Anchor Scrolling with Navbar Offset
     document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
       anchor.addEventListener('click', function (e) {
-        const target = document.querySelector(this.getAttribute('href'));
+        const href = this.getAttribute('href');
+        if (!href || href === '#') return;
+        const target = document.querySelector(href);
         if (!target) return;
+
         e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const navHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--navbar-height')) || 72;
+        const targetPos = clampScroll(target.getBoundingClientRect().top + window.scrollY - navHeight);
+
+        currentY = window.scrollY;
+        targetY = targetPos;
+        isScrolling = true;
+
+        if (!animId) {
+          animId = requestAnimationFrame(scrollLoop);
+        }
       });
     });
   }
@@ -216,7 +328,7 @@
   function init() {
     initNavbar();
     initRipples();
-    initSmoothScroll();
+    initSmoothPageScroll();
     initHeroTextAnimation();
 
     // Listen for intro completion to trigger scroll reveal & unlock scroll

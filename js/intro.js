@@ -81,6 +81,7 @@
   }
 
   let resizeHandler = null;
+  let keydownHandler = null;
   let cachedNavRect = null;
   let cachedIntroWrapWidth = null;
 
@@ -160,6 +161,13 @@
     }
 
     // ═══════════════════════════════════════════════════════
+    // Pre-compute Phase C progress here so it is available
+    // throughout Phase B (the introWrap guard below needs it).
+    // ═══════════════════════════════════════════════════════
+    var jProg  = pct >= 90 ? Math.min(1, (pct - 90) / 10) : 0;
+    var jEased = smoothstep(jProg);
+
+    // ═══════════════════════════════════════════════════════
     // PHASE B  —  Transform  (scroll 80 → 90 %)
     // SVG candles compress & dissolve; school logo seal
     // fades in at the same position. Text lifts and fades.
@@ -191,7 +199,7 @@
       }
     }
 
-    // Keep introWrap at its normal scale during Phase B
+    // Keep introWrap at its normal scale during Phase B (only when Phase C hasn't started)
     if (jProg === 0) {
       if (pct < 80) {
         if (n.introWrap) n.introWrap.style.transform = 'none';
@@ -234,9 +242,8 @@
     // School logo (the seal) flies from centre to navbar.
     // Dark background dissolves → homepage dawns behind it.
     // Navbar slides in as the logo settles.
+    // (jProg & jEased already computed above Phase B)
     // ═══════════════════════════════════════════════════════
-    var jProg  = pct >= 90 ? Math.min(1, (pct - 90) / 10) : 0;
-    var jEased = smoothstep(jProg);
 
     var mc = document.getElementById('main-content');
     var nb = document.getElementById('navbar');
@@ -320,6 +327,10 @@
     if(resizeHandler) {
       window.removeEventListener('resize', resizeHandler);
       resizeHandler = null;
+    }
+    if(keydownHandler) {
+      window.removeEventListener('keydown', keydownHandler);
+      keydownHandler = null;
     }
     cachedNavRect = null;
     cachedIntroWrapWidth = null;
@@ -421,52 +432,84 @@
     if(n.f5){n.f5.style.transform='scale(1)';n.f5.style.opacity='1';}
     render(0,n);
 
-    var isFinished=false, rafPending=false;
+    var isFinished = false;
+    var currentPct = 0;
+    var targetPct = 0;
+    var animFrameId = null;
 
-    function onScroll(){
-      if(isFinished||rafPending) return;
-      rafPending=true;
-      requestAnimationFrame(function(){
-        rafPending=false;
-        if(isFinished) return;
-        var maxScroll = window.innerHeight;
-        var sv = Math.min(window.scrollY, maxScroll);
-        var scrollPercent = (sv / maxScroll) * 100;
-        
-        render(scrollPercent,n);
-        
-        if(sv >= maxScroll - 5){
-          isFinished=true;
-          window.removeEventListener('scroll',onScroll);
-          setTimeout(function(){ finish(overlay,stopParticles,false); },150);
-        }
-      });
+    function lerp(start, end, factor) {
+      return start + (end - start) * factor;
     }
-    window.addEventListener('scroll',onScroll,{passive:true});
+
+    function updateLoop() {
+      // Smoothly interpolate current percentage towards target percentage
+      currentPct = lerp(currentPct, targetPct, 0.16);
+      if (Math.abs(targetPct - currentPct) < 0.04) {
+        currentPct = targetPct;
+      }
+
+      render(currentPct, n);
+
+      if (targetPct >= 99.2 && currentPct >= 98.8) {
+        if (!isFinished) {
+          isFinished = true;
+          window.removeEventListener('scroll', onScroll);
+          if (animFrameId) cancelAnimationFrame(animFrameId);
+          setTimeout(function () { finish(overlay, stopParticles, false); }, 150);
+        }
+        return;
+      }
+
+      if (Math.abs(targetPct - currentPct) >= 0.04) {
+        animFrameId = requestAnimationFrame(updateLoop);
+      } else {
+        animFrameId = null;
+      }
+    }
+
+    function onScroll() {
+      if (isFinished) return;
+      var maxScroll = window.innerHeight * 1.5;
+      var sv = Math.min(window.scrollY, maxScroll);
+      targetPct = (sv / maxScroll) * 100;
+
+      if (!animFrameId) {
+        animFrameId = requestAnimationFrame(updateLoop);
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
 
     resizeHandler = function onResize() {
       cachedNavRect = null;
       cachedIntroWrapWidth = null;
       var sp = document.getElementById('prologue-spacer');
       if (sp) {
-        sp.style.height = window.innerHeight + 'px';
+        sp.style.height = (window.innerHeight * 1.5) + 'px';
       }
     };
-    window.addEventListener('resize', resizeHandler, {passive:true});
+    window.addEventListener('resize', resizeHandler, { passive: true });
     resizeHandler(); // initial call
 
-    function doSkip(){
-      if(isFinished) return; isFinished=true;
-      window.removeEventListener('scroll',onScroll);
-      finish(overlay,stopParticles,true);
+    function doSkip() {
+      if (isFinished) return;
+      isFinished = true;
+      window.removeEventListener('scroll', onScroll);
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      finish(overlay, stopParticles, true);
     }
-    overlay.addEventListener('click', doSkip, {once: true});
+    overlay.addEventListener('click', doSkip, { once: true });
 
-    window.addEventListener('keydown',function(e){
-      if(isFinished) return;
-      if(['ArrowDown',' ','PageDown'].indexOf(e.key)>-1){e.preventDefault();window.scrollBy({top:120,behavior:'smooth'});}
-      else if(['ArrowUp','PageUp'].indexOf(e.key)>-1){e.preventDefault();window.scrollBy({top:-120,behavior:'smooth'});}
-    });
+    keydownHandler = function onKeyDown(e) {
+      if (isFinished) return;
+      if (['ArrowDown', ' ', 'PageDown'].indexOf(e.key) > -1) {
+        e.preventDefault();
+        window.scrollBy({ top: 160, behavior: 'smooth' });
+      } else if (['ArrowUp', 'PageUp'].indexOf(e.key) > -1) {
+        e.preventDefault();
+        window.scrollBy({ top: -160, behavior: 'smooth' });
+      }
+    };
+    window.addEventListener('keydown', keydownHandler);
   }
 
   if(document.readyState==='loading'){

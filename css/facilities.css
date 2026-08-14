@@ -172,6 +172,15 @@
   width: 100%;
 }
 
+.feat-image-wrap .image-placeholder {
+  border: none;
+  box-shadow: var(--shadow-md);
+}
+
+.feat-image-wrap .image-placeholder::before {
+  display: none;
+}
+
 .feat-content-wrap {
   display: flex;
   flex-direction: column;

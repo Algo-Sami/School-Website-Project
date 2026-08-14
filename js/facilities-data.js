@@ -30,9 +30,10 @@
         description: "Introduce students to modern computer education while developing essential digital skills through practical learning experiences.",
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
         image: {
-          url: "https://images.unsplash.com/photo-1562774053-701939374585?w=1000",
-          alt: "Modern educational computer laboratory with clean workstation rows",
-          objectPosition: "center center"
+          url: "assets/images/computer_lab.jpg",
+          alt: "Students working on computers in the Ashraf Islamia school computer laboratory",
+          objectPosition: "center center",
+          objectFit: "cover"
         },
         displayOrder: 1,
         visible: true
@@ -43,9 +44,10 @@
         description: "Encourage curiosity and hands-on scientific learning through practical experiments in a safe laboratory environment.",
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2.5 3.19-2.5 5.5h20c0-2.31-1-4.24-2.5-5.5M12 2v14M8 12h8"/></svg>`,
         image: {
-          url: "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=1000",
-          alt: "Well-equipped science laboratory table with educational apparatus",
-          objectPosition: "center center"
+          url: "assets/images/science_lab.jpg",
+          alt: "Scientific equipment, skeletons, and educational models in the school laboratory",
+          objectPosition: "center center",
+          objectFit: "cover"
         },
         displayOrder: 2,
         visible: true
@@ -56,9 +58,10 @@
         description: "Provide students with access to books and learning resources that promote reading habits, research, and independent learning.",
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/></svg>`,
         image: {
-          url: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1000",
-          alt: "Spacious academic school library hall filled with books and research tables",
-          objectPosition: "center center"
+          url: "assets/images/library.jpg",
+          alt: "Bookshelves and reading area inside the Ashraf Islamia school library",
+          objectPosition: "center center",
+          objectFit: "cover"
         },
         displayOrder: 3,
         visible: true
@@ -82,14 +85,7 @@
         displayOrder: 2,
         visible: true
       },
-      {
-        title: "Separate Washrooms for Boys & Girls",
-        description: "Hygienic, clean, and completely separate washroom blocks dedicated for boys and girls, sanitized throughout the school day.",
-        icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><circle cx="19" cy="8" r="3"/></svg>`,
-        image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600",
-        displayOrder: 3,
-        visible: true
-      },
+
       {
         title: "CCTV Surveillance",
         description: "High-definition CCTV security camera network monitoring school boundaries, hallways, and common areas 24/7.",
@@ -106,14 +102,7 @@
         displayOrder: 5,
         visible: true
       },
-      {
-        title: "Secure Boundary Wall & Campus",
-        description: "Sturdy, tall boundary walls wrapping the entire campus to keep our student community protected from outside disturbances.",
-        icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>`,
-        image: "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=600",
-        displayOrder: 6,
-        visible: true
-      },
+
       {
         title: "Parking Area",
         description: "Safe, spacious, and dedicated on-campus parking slots configured for bicycles, motorcycles, and vehicles of parents and staff.",
@@ -146,14 +135,7 @@
         displayOrder: 10,
         visible: true
       },
-      {
-        title: "Administrative Office",
-        description: "Manages admissions, registers, records, billing queries, certificates issuance, and school document processing.",
-        icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
-        image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600",
-        displayOrder: 11,
-        visible: true
-      },
+
       {
         title: "Waiting Area for Parents",
         description: "A comfortable, quiet waiting room provided for parents and guardians visiting the campus for meetings or information.",
@@ -210,22 +192,58 @@
    * Safe image injector function.
    * Renders image dynamic layers with full loading fallback, preventing layout shifts.
    */
-  function injectImage(containerId, imageData, isEager = false) {
+  function injectImage(containerId, imageData, isEager = false, objectFit = 'cover') {
     if (!imageData || !imageData.url) return;
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    const img = document.createElement('img');
-    img.src = imageData.url;
-    img.alt = imageData.alt || 'School Facility';
-    img.loading = isEager ? 'eager' : 'lazy';
-    img.decoding = 'async';
-    if (imageData.objectPosition) {
-      img.style.objectPosition = imageData.objectPosition;
-    }
-    img.onerror = () => img.remove(); // Removes on error so standard placeholder style displays
+    if (objectFit === 'contain-blur') {
+      // 1. Background blurred image to cover the card
+      const bgImg = document.createElement('img');
+      bgImg.src = imageData.url;
+      bgImg.alt = '';
+      bgImg.loading = isEager ? 'eager' : 'lazy';
+      bgImg.decoding = 'async';
+      bgImg.style.objectFit = 'cover';
+      bgImg.style.filter = 'blur(10px) brightness(0.55)';
+      bgImg.style.position = 'absolute';
+      bgImg.style.inset = '0';
+      bgImg.style.width = '100%';
+      bgImg.style.height = '100%';
+      bgImg.style.zIndex = '1';
+      container.appendChild(bgImg);
 
-    container.appendChild(img);
+      // 2. Foreground contained image to display the full photo without cropping
+      const fgImg = document.createElement('img');
+      fgImg.src = imageData.url;
+      fgImg.alt = imageData.alt || 'School Facility';
+      fgImg.loading = isEager ? 'eager' : 'lazy';
+      fgImg.decoding = 'async';
+      fgImg.style.objectFit = 'contain';
+      fgImg.style.position = 'absolute';
+      fgImg.style.inset = '0';
+      fgImg.style.width = '100%';
+      fgImg.style.height = '100%';
+      fgImg.style.zIndex = '2';
+      fgImg.onerror = () => {
+        bgImg.remove();
+        fgImg.remove();
+      };
+      container.appendChild(fgImg);
+    } else {
+      const img = document.createElement('img');
+      img.src = imageData.url;
+      img.alt = imageData.alt || 'School Facility';
+      img.loading = isEager ? 'eager' : 'lazy';
+      img.decoding = 'async';
+      img.style.objectFit = objectFit;
+      if (imageData.objectPosition) {
+        img.style.objectPosition = imageData.objectPosition;
+      }
+      img.onerror = () => img.remove(); // Removes on error so standard placeholder style displays
+
+      container.appendChild(img);
+    }
   }
 
   /**
@@ -249,10 +267,12 @@
 
       const featSection = document.createElement('div');
       featSection.className = `feat-item reveal ${isEven ? 'reveal-left' : 'reveal-right'}`;
+      const aspectRatio = item.aspectRatio || 1.5;
+      const imgFit = (item.image && item.image.objectFit) ? item.image.objectFit : 'cover';
       featSection.innerHTML = `
         <div class="${layoutClass}">
           <div class="feat-image-wrap">
-            <div class="image-placeholder" id="${imgId}" style="--aspect-ratio: 1.5;" aria-label="${item.title} image placeholder" role="img">
+            <div class="image-placeholder" id="${imgId}" style="--aspect-ratio: ${aspectRatio}; ${imgFit === 'contain' ? 'background: #faf8f3; border: none; margin-inline: 80px;' : ''}" aria-label="${item.title} image placeholder" role="img">
               <div class="placeholder-overlay">
                 <span class="placeholder-icon-large">${item.icon}</span>
                 <span class="placeholder-label">[ ${item.title} ]</span>
@@ -269,7 +289,7 @@
 
       container.appendChild(featSection);
       // Inject image on client
-      injectImage(imgId, item.image);
+      injectImage(imgId, item.image, false, imgFit);
     });
   }
 
@@ -326,7 +346,7 @@
 
     if (titleEl) titleEl.textContent = slData.headline;
     if (descEl) descEl.textContent = slData.description;
-    
+
     // Inject image
     injectImage('student-life-img-container', slData.image);
 
