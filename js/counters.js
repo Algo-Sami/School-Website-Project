@@ -64,19 +64,23 @@
     requestAnimationFrame(step);
   }
 
-  function initCounters() {
-    // Respect reduced motion preference
+  const FACULTY_COUNTER_CONFIG = [
+    { id: 'faculty-stat-educators',  target: 100,  suffix: '+', duration: 1600 },
+    { id: 'faculty-stat-areas',      target: 10,   suffix: '+', duration: 1400 },
+    { id: 'faculty-stat-experience', target: 15,   suffix: '+', duration: 1600 },
+    { id: 'faculty-stat-students',   target: 2000, suffix: '+', duration: 2000 },
+  ];
+
+  function initSectionCounters(sectionId, config) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const statsSection = document.getElementById('stats');
-    if (!statsSection) return;
-
     if (!('IntersectionObserver' in window)) {
-      COUNTER_CONFIG.forEach(({ id, target }) => {
+      config.forEach(({ id, target }) => {
         const el = document.getElementById(id);
-        if (el) {
-          setLeadingText(el, target.toLocaleString());
-        }
+        if (el) setLeadingText(el, target.toLocaleString());
       });
       return;
     }
@@ -86,12 +90,11 @@
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
 
-          COUNTER_CONFIG.forEach(({ id, target, duration }) => {
+          config.forEach(({ id, target, duration }) => {
             const el = document.getElementById(id);
             if (!el) return;
 
             if (prefersReduced) {
-              // Set just the leading text; the suffix span is already in DOM
               setLeadingText(el, target.toLocaleString());
             } else {
               animateCounter(el, target, duration);
@@ -101,10 +104,15 @@
           observer.unobserve(entry.target);
         });
       },
-      { threshold: 0.4 }
+      { threshold: 0.3 }
     );
 
-    observer.observe(statsSection);
+    observer.observe(section);
+  }
+
+  function initCounters() {
+    initSectionCounters('stats', COUNTER_CONFIG);
+    initSectionCounters('faculty-stats', FACULTY_COUNTER_CONFIG);
   }
 
   if (document.readyState === 'loading') {

@@ -116,6 +116,22 @@
   flex-wrap: wrap;
 }
 
+#faculty-hero-img {
+  min-height: 320px;
+}
+
+@media (min-width: 768px) {
+  #faculty-hero-img {
+    min-height: 420px;
+  }
+}
+
+@media (min-width: 1024px) {
+  #faculty-hero-img {
+    min-height: 480px;
+  }
+}
+
 /* ─── Section Spacing scoping ────────────────────────── */
 .faculty-page section {
   overflow: hidden;

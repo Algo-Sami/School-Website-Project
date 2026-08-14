@@ -18,7 +18,7 @@
 
   const slides = [
     {
-      image: 'assets/images/hero_building.png',
+      image: 'assets/images/hero_excellence.jpg',
       label: 'Est. Since Decades',
       headline: 'Where <em>Excellence</em><br>Finds Its Home',
       sub: 'A legacy of academic distinction, moral character, and transformative education — shaping the leaders of tomorrow.',
@@ -30,7 +30,7 @@
       sub: 'Every classroom is a sanctuary of knowledge, guided by dedicated educators who inspire curiosity and critical thinking.',
     },
     {
-      image: 'assets/images/hero_campus.png',
+      image: 'assets/images/hero_community_values.jpg',
       label: 'Vibrant Campus Life',
       headline: 'A Community<br>Built on <em>Values</em>',
       sub: 'Beyond academics, we nurture character, brotherhood, and a lifelong love of learning in every student we serve.',
