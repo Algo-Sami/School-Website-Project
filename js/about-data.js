@@ -10,10 +10,10 @@
   const aboutContent = {
     heroImage: {
       id: "about-hero-img",
-      url: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1000",
-      alt: "Prestigious educational campus building architecture",
+      url: "assets/images/about_hero_students.jpeg",
+      alt: "Ashraf Islamia Model Public School students in uniform celebrating with flowers",
       objectPosition: "center center",
-      temporary: true
+      temporary: false
     },
     whoWeAreImage: {
       id: "about-whoweare-img",
@@ -38,10 +38,9 @@
     },
     futureVisionImage: {
       id: "about-future-img",
-      url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1000",
-      alt: "Modern educational technology and academic ambition",
-      objectPosition: "center center",
-      temporary: true
+      url: "assets/images/about_future_students.jpg",
+      alt: "Ashraf Islamia Model Public School students seated during a national event assembly",
+      temporary: false
     },
     statistics: [
       {
@@ -96,7 +95,11 @@
       const container = document.getElementById(item.id);
       if (!container) return;
 
-      const img = document.createElement('img');
+      let img = container.querySelector('img');
+      if (!img) {
+        img = document.createElement('img');
+        container.appendChild(img);
+      }
       img.src = item.url;
       img.alt = item.alt || 'School visual';
       img.loading = item.id.includes('hero') ? 'eager' : 'lazy';
@@ -104,13 +107,14 @@
       if (item.objectPosition) {
         img.style.objectPosition = item.objectPosition;
       }
+      if (item.objectFit) {
+        img.style.objectFit = item.objectFit;
+      }
 
       // Fallback handling: only display if image loads successfully
       img.onerror = () => {
         img.remove(); // Remove broken image element so CSS placeholder remains visible
       };
-
-      container.appendChild(img);
     });
   }
 

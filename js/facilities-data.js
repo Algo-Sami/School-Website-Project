@@ -29,11 +29,12 @@
         title: "Computer Laboratory",
         description: "Introduce students to modern computer education while developing essential digital skills through practical learning experiences.",
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+        aspectRatio: 1,
         image: {
           url: "assets/images/computer_lab.jpg",
           alt: "Students working on computers in the Ashraf Islamia school computer laboratory",
           objectPosition: "center center",
-          objectFit: "cover"
+          objectFit: "contain"
         },
         displayOrder: 1,
         visible: true
@@ -43,11 +44,12 @@
         title: "Science Laboratory",
         description: "Encourage curiosity and hands-on scientific learning through practical experiments in a safe laboratory environment.",
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2.5 3.19-2.5 5.5h20c0-2.31-1-4.24-2.5-5.5M12 2v14M8 12h8"/></svg>`,
+        aspectRatio: 1,
         image: {
           url: "assets/images/science_lab.jpg",
           alt: "Scientific equipment, skeletons, and educational models in the school laboratory",
           objectPosition: "center center",
-          objectFit: "cover"
+          objectFit: "contain"
         },
         displayOrder: 2,
         visible: true
@@ -57,11 +59,12 @@
         title: "Library",
         description: "Provide students with access to books and learning resources that promote reading habits, research, and independent learning.",
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/></svg>`,
+        aspectRatio: 1,
         image: {
           url: "assets/images/library.jpg",
           alt: "Bookshelves and reading area inside the Ashraf Islamia school library",
           objectPosition: "center center",
-          objectFit: "cover"
+          objectFit: "contain"
         },
         displayOrder: 3,
         visible: true
@@ -272,7 +275,7 @@
       featSection.innerHTML = `
         <div class="${layoutClass}">
           <div class="feat-image-wrap">
-            <div class="image-placeholder" id="${imgId}" style="--aspect-ratio: ${aspectRatio}; ${imgFit === 'contain' ? 'background: #faf8f3; border: none; margin-inline: 80px;' : ''}" aria-label="${item.title} image placeholder" role="img">
+            <div class="image-placeholder" id="${imgId}" style="--aspect-ratio: ${aspectRatio};" aria-label="${item.title} image placeholder" role="img">
               <div class="placeholder-overlay">
                 <span class="placeholder-icon-large">${item.icon}</span>
                 <span class="placeholder-label">[ ${item.title} ]</span>

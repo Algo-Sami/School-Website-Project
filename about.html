@@ -86,6 +86,7 @@
   </script>
 
   <!-- ─── Preloads ──────────────────────────────────── -->
+  <link rel="preload" as="image" href="assets/images/about_hero_students.jpeg" fetchpriority="high" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
@@ -221,18 +222,11 @@
               purpose.</p>
           </div>
 
-          <!-- Reusable Aspect-Ratio Campus Image Placeholder -->
+          <!-- Reusable Aspect-Ratio Campus Image Container -->
           <div class="reveal delay-150">
             <div class="image-placeholder" id="about-hero-img" style="--aspect-ratio: 4/3;"
-              aria-label="School Campus Image Placeholder" role="img">
-              <div class="placeholder-overlay">
-                <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                  aria-hidden="true">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-                <span class="placeholder-label">School Campus</span>
-              </div>
+              aria-label="Ashraf Islamia Model Public School Students" role="img">
+              <img src="assets/images/about_hero_students.jpeg" alt="Ashraf Islamia Model Public School students in uniform celebrating with flowers and animal hats" width="600" height="450" loading="eager" decoding="async" fetchpriority="high" />
             </div>
           </div>
 
@@ -761,17 +755,15 @@
             </div>
           </div>
 
-          <!-- Large Facilities Image Placeholder -->
-          <div class="reveal-right">
-            <div class="image-placeholder" id="about-future-img" style="--aspect-ratio: 4/3;"
-              aria-label="Future Campus Expansion Placeholder" role="img">
-              <div class="placeholder-overlay">
-                <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                  aria-hidden="true">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                <span class="placeholder-label">[ Future Campus Expansion Placeholder ]</span>
-              </div>
+          <!-- Preparing for Tomorrow's Challenges — full uncropped assembly image card -->
+          <div class="future-image-col reveal-right">
+            <div class="future-image-card" id="about-future-img">
+              <img
+                src="assets/images/about_future_students.jpg"
+                alt="Students seated at a national event assembly at Ashraf Islamia MPSS"
+                loading="lazy"
+                decoding="async"
+              />
             </div>
           </div>
 
