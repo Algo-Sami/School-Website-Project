@@ -44,9 +44,7 @@
   };
 
   /* ─── Image strip slot references (built once, reused) ── */
-  let lbStrip   = null;  // <div id="lb-strip"> container
-  let lbImgPrev = null;  // <img> in the prev slot
-  let lbImgNext = null;  // <img> in the next slot
+  let lbStrip = null;  // <div id="lb-strip"> container
 
   /* ═══════════════════════════════════════════════════════════
      SHARED SCROLL REVEAL OBSERVER
@@ -444,66 +442,40 @@
     return dom.lbImageWrap ? dom.lbImageWrap.clientWidth : window.innerWidth;
   }
 
-  /* ─── 3-slot image strip ──────────────────────────────── */
+  /* ─── 3-slot virtual strip buffer ────────────────────────── */
+  let slides       = [];   // [slide0, slide1, slide2] DOM element array in current strip order
+  let isNavigating = false;
 
   /**
-   * Build the [prev | curr | next] strip inside lb-image-wrap on first open.
-   * The existing #lb-image element is moved into the centre slot so all
-   * cached references to dom.lbImage remain valid.
-   * Strip width = 300 % of the wrap; translateX positions the visible slot.
+   * Build the [prev | curr | next] 3-slot strip inside lb-image-wrap on first open.
+   * Strip width = 300% of the wrap; translateX positions the visible slot.
    */
   function initLbStrip() {
-    if (lbStrip) return; // Built once per page load
+    if (lbStrip && slides.length === 3) return; // Built once per page load
 
     const wrap = dom.lbImageWrap;
     if (!wrap) return;
-    const curr = dom.lbImage || wrap.querySelector('img');
     wrap.innerHTML = '';
 
     lbStrip           = document.createElement('div');
     lbStrip.id        = 'lb-strip';
     lbStrip.className = 'lb-strip';
 
-    /* ── Prev slot ── */
-    const sPrev     = document.createElement('div');
-    sPrev.className = 'lb-slide lb-slide-prev';
-    lbImgPrev = document.createElement('img');
-    lbImgPrev.className = 'lb-slide-img';
-    lbImgPrev.alt = '';
-    lbImgPrev.setAttribute('aria-hidden', 'true');
-    lbImgPrev.setAttribute('draggable', 'false');
-    lbImgPrev.decoding = 'async';
-    sPrev.appendChild(lbImgPrev);
-
-    /* ── Current slot — reuse existing #lb-image ── */
-    const sCurr     = document.createElement('div');
-    sCurr.className = 'lb-slide lb-slide-curr';
-    let activeImg = curr;
-    if (!activeImg) {
-      activeImg = document.createElement('img');
-      activeImg.id = 'lb-image';
+    slides = [];
+    for (let i = 0; i < 3; i++) {
+      const slide = document.createElement('div');
+      slide.className = `lb-slide lb-slide-${i}`;
+      const img = document.createElement('img');
+      img.className = 'lb-slide-img';
+      img.alt = '';
+      img.setAttribute('draggable', 'false');
+      img.decoding = 'async';
+      img.ondragstart = (e) => e.preventDefault();
+      slide.appendChild(img);
+      lbStrip.appendChild(slide);
+      slides.push(slide);
     }
-    activeImg.className  = 'lb-slide-img';          // apply shared image styles
-    activeImg.setAttribute('draggable', 'false');
-    activeImg.style.animation   = 'none';           // strip handles transitions
-    activeImg.ondragstart = (e) => e.preventDefault();
-    sCurr.appendChild(activeImg);
-    dom.lbImage = activeImg;
 
-    /* ── Next slot ── */
-    const sNext     = document.createElement('div');
-    sNext.className = 'lb-slide lb-slide-next';
-    lbImgNext = document.createElement('img');
-    lbImgNext.className = 'lb-slide-img';
-    lbImgNext.alt = '';
-    lbImgNext.setAttribute('aria-hidden', 'true');
-    lbImgNext.setAttribute('draggable', 'false');
-    lbImgNext.decoding = 'async';
-    sNext.appendChild(lbImgNext);
-
-    lbStrip.appendChild(sPrev);
-    lbStrip.appendChild(sCurr);
-    lbStrip.appendChild(sNext);
     wrap.appendChild(lbStrip);
   }
 
@@ -514,133 +486,65 @@
     lbStrip.style.transform  = 'translateX(-33.333333%)';
   }
 
-  /** Pre-load adjacent photos into the prev/next slots. */
-  function loadAdjacentImages() {
+  /**
+   * Synchronises the 3 slide slots:
+   * slides[0] = prev photo (off-screen left)
+   * slides[1] = curr photo (visible in centre)
+   * slides[2] = next photo (off-screen right)
+   */
+  function syncSlides() {
+    if (!lbStrip || slides.length < 3) return;
     const photos = state.lightboxPhotos;
     const idx    = state.lightboxIndex;
+    if (!photos || photos.length === 0) return;
 
-    /* ─ Prev slot ─ */
-    if (lbImgPrev) {
-      const prevSlide = lbImgPrev.closest('.lb-slide');
-      if (idx > 0) {
-        const src = toFullRes(photos[idx - 1].src);
-        if (lbImgPrev.dataset.loadedSrc !== src) {
-          lbImgPrev.src               = src;
-          lbImgPrev.alt               = photos[idx - 1].alt;
-          lbImgPrev.dataset.loadedSrc = src;
-        }
-        if (prevSlide) prevSlide.style.visibility = '';
-      } else {
-        if (prevSlide) prevSlide.style.visibility = 'hidden';
+    const prevSlide = slides[0];
+    const currSlide = slides[1];
+    const nextSlide = slides[2];
+
+    const prevImg = prevSlide.querySelector('img');
+    const currImg = currSlide.querySelector('img');
+    const nextImg = nextSlide.querySelector('img');
+
+    // Current slide (middle slot, index 1)
+    if (photos[idx]) {
+      const src = toFullRes(photos[idx].src);
+      if (currImg.dataset.loadedSrc !== src) {
+        currImg.src = src;
+        currImg.alt = photos[idx].alt;
+        currImg.dataset.loadedSrc = src;
       }
+      currSlide.style.visibility = '';
+      dom.lbImage = currImg;
     }
 
-    /* ─ Next slot ─ */
-    if (lbImgNext) {
-      const nextSlide = lbImgNext.closest('.lb-slide');
-      if (idx < photos.length - 1) {
-        const src = toFullRes(photos[idx + 1].src);
-        if (lbImgNext.dataset.loadedSrc !== src) {
-          lbImgNext.src               = src;
-          lbImgNext.alt               = photos[idx + 1].alt;
-          lbImgNext.dataset.loadedSrc = src;
-        }
-        if (nextSlide) nextSlide.style.visibility = '';
-      } else {
-        if (nextSlide) nextSlide.style.visibility = 'hidden';
+    // Prev slide (left slot, index 0)
+    if (idx > 0 && photos[idx - 1]) {
+      const src = toFullRes(photos[idx - 1].src);
+      if (prevImg.dataset.loadedSrc !== src) {
+        prevImg.src = src;
+        prevImg.alt = photos[idx - 1].alt;
+        prevImg.dataset.loadedSrc = src;
       }
-    }
-  }
-
-  /* ─── Open / Close ─────────────────────────────────────── */
-
-  function openLightbox(index) {
-    state.lightboxOpen  = true;
-    state.lightboxIndex = index;
-
-    // Save exact scroll position so we can restore it on close.
-    state.savedScrollY = window.scrollY || window.pageYOffset || 0;
-
-    // Lock body scroll.
-    // The position:fixed + top:-scrollY approach prevents iOS Safari's
-    // rubber-band scrolling from bleeding through the overlay.
-    document.body.style.position = 'fixed';
-    document.body.style.top      = `-${state.savedScrollY}px`;
-    document.body.style.width    = '100%';
-    document.body.style.overflow = 'hidden';
-
-    dom.lightbox.hidden = false;
-    dom.lightbox.setAttribute('aria-hidden', 'false');
-
-    // Build strip on first ever open (no-op on subsequent opens)
-    initLbStrip();
-    renderLightboxImage();
-
-    // Push a history entry so that pressing the Android/browser Back button
-    // closes the lightbox rather than navigating away from the gallery.
-    history.pushState({ galleryLightbox: true }, '');
-    state.lbHistoryPushed = true;
-
-    dom.lbClose.focus();
-  }
-
-  /**
-   * Perform the actual visual close — called by the popstate handler
-   * (Android/browser Back) or directly when no history entry was pushed.
-   * Never calls history.back() itself.
-   */
-  function doCloseLightbox() {
-    if (!state.lightboxOpen) return;
-    state.lightboxOpen    = false;
-    state.lbHistoryPushed = false;
-
-    dom.lightbox.hidden = true;
-    dom.lightbox.setAttribute('aria-hidden', 'true');
-
-    // Restore scroll position exactly
-    document.body.style.position = '';
-    document.body.style.top      = '';
-    document.body.style.width    = '';
-    document.body.style.overflow = '';
-    window.scrollTo(0, state.savedScrollY);
-
-    // Return keyboard focus to the thumbnail that opened this photo
-    const thumb = $(`[data-index="${state.lightboxIndex}"]`, dom.photoGrid);
-    thumb?.focus();
-
-    // Prepare strip for the next open
-    resetStripPosition();
-  }
-
-  /**
-   * Public close entry-point — triggered by the Close button or Escape key.
-   * Delegates to history.back() when we have a pushed history entry, so that
-   * the popstate handler (which also handles Android Back) is the single
-   * point that performs the actual close.
-   */
-  function closeLightbox() {
-    if (!state.lightboxOpen) return;
-    if (state.lbHistoryPushed) {
-      // history.back() → popstate event → doCloseLightbox()
-      history.back();
+      prevSlide.style.visibility = '';
     } else {
-      doCloseLightbox();
-    }
-  }
-
-  function renderLightboxImage() {
-    const photos = state.lightboxPhotos;
-    const idx    = state.lightboxIndex;
-    const photo  = photos[idx];
-    if (!photo) return;
-
-    // Update the current (centre) image
-    if (dom.lbImage) {
-      dom.lbImage.src = toFullRes(photo.src);
-      dom.lbImage.alt = photo.alt;
+      prevSlide.style.visibility = 'hidden';
     }
 
-    // Keep counter synchronised: "3 / 12"
+    // Next slide (right slot, index 2)
+    if (idx < photos.length - 1 && photos[idx + 1]) {
+      const src = toFullRes(photos[idx + 1].src);
+      if (nextImg.dataset.loadedSrc !== src) {
+        nextImg.src = src;
+        nextImg.alt = photos[idx + 1].alt;
+        nextImg.dataset.loadedSrc = src;
+      }
+      nextSlide.style.visibility = '';
+    } else {
+      nextSlide.style.visibility = 'hidden';
+    }
+
+    // Update counter: "3 / 12"
     if (dom.lbCounter) {
       dom.lbCounter.textContent = `${idx + 1} / ${photos.length}`;
     }
@@ -656,10 +560,76 @@
       dom.lbNext.setAttribute('aria-label', 'Next photo');
       dom.lbNext.setAttribute('aria-disabled', String(idx === photos.length - 1));
     }
+  }
 
-    // Reset strip to centre then pre-load neighbours
+  /* ─── Open / Close ─────────────────────────────────────── */
+
+  function openLightbox(index) {
+    state.lightboxOpen  = true;
+    state.lightboxIndex = index;
+
+    // Save exact scroll position so we can restore it on close.
+    state.savedScrollY = window.scrollY || window.pageYOffset || 0;
+
+    // Lock body scroll.
+    document.body.style.position = 'fixed';
+    document.body.style.top      = `-${state.savedScrollY}px`;
+    document.body.style.width    = '100%';
+    document.body.style.overflow = 'hidden';
+
+    dom.lightbox.hidden = false;
+    dom.lightbox.setAttribute('aria-hidden', 'false');
+
+    // Build strip on first ever open
+    initLbStrip();
+    renderLightboxImage();
+
+    // Push a history entry for back button navigation
+    history.pushState({ galleryLightbox: true }, '');
+    state.lbHistoryPushed = true;
+
+    dom.lbClose.focus();
+  }
+
+  /**
+   * Perform the actual visual close.
+   */
+  function doCloseLightbox() {
+    if (!state.lightboxOpen) return;
+    state.lightboxOpen    = false;
+    state.lbHistoryPushed = false;
+    isNavigating          = false;
+
+    dom.lightbox.hidden = true;
+    dom.lightbox.setAttribute('aria-hidden', 'true');
+
+    // Restore scroll position exactly
+    document.body.style.position = '';
+    document.body.style.top      = '';
+    document.body.style.width    = '';
+    document.body.style.overflow = '';
+    window.scrollTo(0, state.savedScrollY);
+
+    // Return keyboard focus to the thumbnail that opened this photo
+    const thumb = $(`[data-index="${state.lightboxIndex}"]`, dom.photoGrid);
+    thumb?.focus();
+
+    // Prepare strip for next open
     resetStripPosition();
-    if (lbStrip) loadAdjacentImages();
+  }
+
+  function closeLightbox() {
+    if (!state.lightboxOpen) return;
+    if (state.lbHistoryPushed) {
+      history.back();
+    } else {
+      doCloseLightbox();
+    }
+  }
+
+  function renderLightboxImage() {
+    resetStripPosition();
+    syncSlides();
   }
 
   /* ─── Navigation ── */
@@ -679,17 +649,21 @@
   }
 
   /**
-   * Complete a mobile swipe gesture in the given direction.
+   * Complete a mobile swipe gesture in the given direction with zero-flicker
+   * buffer slot rotation.
    *
    * @param {'prev'|'next'} direction
    * @param {number} swipeDx - Final swipe drag offset (px)
    */
   function navigateSwipe(direction, swipeDx) {
-    if (!lbStrip) {
+    if (!lbStrip || slides.length < 3) {
       if (direction === 'next') lightboxNext();
       else lightboxPrev();
       return;
     }
+
+    if (isNavigating) return;
+    isNavigating = true;
 
     const targetPercent = direction === 'next' ? '-66.666667%' : '0%';
     const fromTransform = `translateX(calc(-33.333333% + ${swipeDx}px))`;
@@ -708,11 +682,30 @@
 
     setTimeout(() => {
       if (direction === 'next') {
-        if (state.lightboxIndex < state.lightboxPhotos.length - 1) state.lightboxIndex++;
+        if (state.lightboxIndex < state.lightboxPhotos.length - 1) {
+          state.lightboxIndex++;
+          // Rotate slot 0 (prev) to the end (next)
+          const first = slides.shift();
+          lbStrip.appendChild(first);
+          slides.push(first);
+        }
       } else {
-        if (state.lightboxIndex > 0) state.lightboxIndex--;
+        if (state.lightboxIndex > 0) {
+          state.lightboxIndex--;
+          // Rotate slot 2 (next) to the front (prev)
+          const last = slides.pop();
+          lbStrip.insertBefore(last, slides[0]);
+          slides.unshift(last);
+        }
       }
-      renderLightboxImage();
+
+      // Reset transform back to centre slot seamlessly (the newly visible image is already in the middle slot)
+      lbStrip.style.transition = 'none';
+      lbStrip.style.transform  = 'translateX(-33.333333%)';
+
+      // Update adjacent background slots & UI counter/buttons
+      syncSlides();
+      isNavigating = false;
     }, dur);
   }
 
@@ -813,7 +806,7 @@
   function onSwipeDown(e) {
     // Ignore events originating from interactive controls
     if (e.target.closest('button') || e.target.closest('[role="button"]')) return;
-    if (swipeGesture.active) return;
+    if (swipeGesture.active || isNavigating) return;
     // Mouse: primary button only
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
