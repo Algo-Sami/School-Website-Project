@@ -6,7 +6,7 @@
  *  - Main gallery listing (event albums)
  *  - Event detail view
  *  - Category filtering
- *  - Photo lightbox (keyboard + touch)
+ *  - Photo lightbox (keyboard + pointer/touch swipe)
  *  - Video modal
  *  - Loading / skeleton states
  *  - URL hash-based routing (/gallery.html or /gallery.html#event-slug)
@@ -21,16 +21,32 @@
   ═══════════════════════════════════════════════════════════ */
 
   const state = {
-    activeCategory: 'all',
-    currentView:    'grid',   // 'grid' | 'event'
-    currentEvent:   null,     // event object
-    lightboxPhotos: [],
-    lightboxIndex:  0,
-    lightboxOpen:   false,
-    videoOpen:      false,
-    touchStartX:    0,
-    touchStartY:    0,
+    activeCategory:  'all',
+    currentView:     'grid',   // 'grid' | 'event'
+    currentEvent:    null,     // event object
+    lightboxPhotos:  [],
+    lightboxIndex:   0,
+    lightboxOpen:    false,
+    videoOpen:       false,
+    savedScrollY:    0,        // page scroll position saved before lightbox opens
+    lbHistoryPushed: false,    // true when we pushed a history entry for the lightbox
   };
+
+  /* ─── Swipe gesture tracking ─────────────────────────── */
+  const swipeGesture = {
+    active:     false,
+    pointerId:  null,
+    startX:     0,
+    startY:     0,
+    deltaX:     0,
+    axisLocked: false,   // true once confirmed horizontal
+    cancelled:  false,   // true once confirmed vertical
+  };
+
+  /* ─── Image strip slot references (built once, reused) ── */
+  let lbStrip   = null;  // <div id="lb-strip"> container
+  let lbImgPrev = null;  // <img> in the prev slot
+  let lbImgNext = null;  // <img> in the next slot
 
   /* ═══════════════════════════════════════════════════════════
      SHARED SCROLL REVEAL OBSERVER
@@ -81,6 +97,7 @@
       backBtn:         $('#back-to-gallery'),
       lightbox:        $('#gallery-lightbox'),
       lbImage:         $('#lb-image'),
+      lbImageWrap:     $('.lb-image-wrap'),
       lbCounter:       $('#lb-counter'),
       lbClose:         $('#lb-close'),
       lbPrev:          $('#lb-prev'),
@@ -415,24 +432,200 @@
      LIGHTBOX
   ═══════════════════════════════════════════════════════════ */
 
+  /* ─── Utilities ───────────────────────────────────────── */
+
+  /** Convert thumbnail URL to full-resolution URL. */
+  function toFullRes(src) {
+    return src.replace('w=600', 'w=1400').replace('q=70', 'q=85');
+  }
+
+  /** Width of one slide slot (= lb-image-wrap client width). */
+  function slideWidth() {
+    return dom.lbImageWrap ? dom.lbImageWrap.clientWidth : window.innerWidth;
+  }
+
+  /* ─── 3-slot image strip ──────────────────────────────── */
+
+  /**
+   * Build the [prev | curr | next] strip inside lb-image-wrap on first open.
+   * The existing #lb-image element is moved into the centre slot so all
+   * cached references to dom.lbImage remain valid.
+   * Strip width = 300 % of the wrap; translateX positions the visible slot.
+   */
+  function initLbStrip() {
+    if (lbStrip) return; // Built once per page load
+
+    const wrap = dom.lbImageWrap;
+    if (!wrap) return;
+    const curr = dom.lbImage || wrap.querySelector('img');
+    wrap.innerHTML = '';
+
+    lbStrip           = document.createElement('div');
+    lbStrip.id        = 'lb-strip';
+    lbStrip.className = 'lb-strip';
+
+    /* ── Prev slot ── */
+    const sPrev     = document.createElement('div');
+    sPrev.className = 'lb-slide lb-slide-prev';
+    lbImgPrev = document.createElement('img');
+    lbImgPrev.className = 'lb-slide-img';
+    lbImgPrev.alt = '';
+    lbImgPrev.setAttribute('aria-hidden', 'true');
+    lbImgPrev.setAttribute('draggable', 'false');
+    lbImgPrev.decoding = 'async';
+    sPrev.appendChild(lbImgPrev);
+
+    /* ── Current slot — reuse existing #lb-image ── */
+    const sCurr     = document.createElement('div');
+    sCurr.className = 'lb-slide lb-slide-curr';
+    let activeImg = curr;
+    if (!activeImg) {
+      activeImg = document.createElement('img');
+      activeImg.id = 'lb-image';
+    }
+    activeImg.className  = 'lb-slide-img';          // apply shared image styles
+    activeImg.setAttribute('draggable', 'false');
+    activeImg.style.animation   = 'none';           // strip handles transitions
+    activeImg.ondragstart = (e) => e.preventDefault();
+    sCurr.appendChild(activeImg);
+    dom.lbImage = activeImg;
+
+    /* ── Next slot ── */
+    const sNext     = document.createElement('div');
+    sNext.className = 'lb-slide lb-slide-next';
+    lbImgNext = document.createElement('img');
+    lbImgNext.className = 'lb-slide-img';
+    lbImgNext.alt = '';
+    lbImgNext.setAttribute('aria-hidden', 'true');
+    lbImgNext.setAttribute('draggable', 'false');
+    lbImgNext.decoding = 'async';
+    sNext.appendChild(lbImgNext);
+
+    lbStrip.appendChild(sPrev);
+    lbStrip.appendChild(sCurr);
+    lbStrip.appendChild(sNext);
+    wrap.appendChild(lbStrip);
+  }
+
+  /** Snap strip to show the centre (current) slot — no animation. */
+  function resetStripPosition() {
+    if (!lbStrip) return;
+    lbStrip.style.transition = 'none';
+    lbStrip.style.transform  = 'translateX(-33.333333%)';
+  }
+
+  /** Pre-load adjacent photos into the prev/next slots. */
+  function loadAdjacentImages() {
+    const photos = state.lightboxPhotos;
+    const idx    = state.lightboxIndex;
+
+    /* ─ Prev slot ─ */
+    if (lbImgPrev) {
+      const prevSlide = lbImgPrev.closest('.lb-slide');
+      if (idx > 0) {
+        const src = toFullRes(photos[idx - 1].src);
+        if (lbImgPrev.dataset.loadedSrc !== src) {
+          lbImgPrev.src               = src;
+          lbImgPrev.alt               = photos[idx - 1].alt;
+          lbImgPrev.dataset.loadedSrc = src;
+        }
+        if (prevSlide) prevSlide.style.visibility = '';
+      } else {
+        if (prevSlide) prevSlide.style.visibility = 'hidden';
+      }
+    }
+
+    /* ─ Next slot ─ */
+    if (lbImgNext) {
+      const nextSlide = lbImgNext.closest('.lb-slide');
+      if (idx < photos.length - 1) {
+        const src = toFullRes(photos[idx + 1].src);
+        if (lbImgNext.dataset.loadedSrc !== src) {
+          lbImgNext.src               = src;
+          lbImgNext.alt               = photos[idx + 1].alt;
+          lbImgNext.dataset.loadedSrc = src;
+        }
+        if (nextSlide) nextSlide.style.visibility = '';
+      } else {
+        if (nextSlide) nextSlide.style.visibility = 'hidden';
+      }
+    }
+  }
+
+  /* ─── Open / Close ─────────────────────────────────────── */
+
   function openLightbox(index) {
     state.lightboxOpen  = true;
     state.lightboxIndex = index;
+
+    // Save exact scroll position so we can restore it on close.
+    state.savedScrollY = window.scrollY || window.pageYOffset || 0;
+
+    // Lock body scroll.
+    // The position:fixed + top:-scrollY approach prevents iOS Safari's
+    // rubber-band scrolling from bleeding through the overlay.
+    document.body.style.position = 'fixed';
+    document.body.style.top      = `-${state.savedScrollY}px`;
+    document.body.style.width    = '100%';
+    document.body.style.overflow = 'hidden';
+
     dom.lightbox.hidden = false;
     dom.lightbox.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
+
+    // Build strip on first ever open (no-op on subsequent opens)
+    initLbStrip();
     renderLightboxImage();
+
+    // Push a history entry so that pressing the Android/browser Back button
+    // closes the lightbox rather than navigating away from the gallery.
+    history.pushState({ galleryLightbox: true }, '');
+    state.lbHistoryPushed = true;
+
     dom.lbClose.focus();
   }
 
-  function closeLightbox() {
-    state.lightboxOpen  = false;
+  /**
+   * Perform the actual visual close — called by the popstate handler
+   * (Android/browser Back) or directly when no history entry was pushed.
+   * Never calls history.back() itself.
+   */
+  function doCloseLightbox() {
+    if (!state.lightboxOpen) return;
+    state.lightboxOpen    = false;
+    state.lbHistoryPushed = false;
+
     dom.lightbox.hidden = true;
     dom.lightbox.setAttribute('aria-hidden', 'true');
+
+    // Restore scroll position exactly
+    document.body.style.position = '';
+    document.body.style.top      = '';
+    document.body.style.width    = '';
     document.body.style.overflow = '';
-    // Return focus to the photo that opened the lightbox
+    window.scrollTo(0, state.savedScrollY);
+
+    // Return keyboard focus to the thumbnail that opened this photo
     const thumb = $(`[data-index="${state.lightboxIndex}"]`, dom.photoGrid);
     thumb?.focus();
+
+    // Prepare strip for the next open
+    resetStripPosition();
+  }
+
+  /**
+   * Public close entry-point — triggered by the Close button or Escape key.
+   * Delegates to history.back() when we have a pushed history entry, so that
+   * the popstate handler (which also handles Android Back) is the single
+   * point that performs the actual close.
+   */
+  function closeLightbox() {
+    if (!state.lightboxOpen) return;
+    if (state.lbHistoryPushed) {
+      // history.back() → popstate event → doCloseLightbox()
+      history.back();
+    } else {
+      doCloseLightbox();
+    }
   }
 
   function renderLightboxImage() {
@@ -441,17 +634,35 @@
     const photo  = photos[idx];
     if (!photo) return;
 
-    // Full-res version
-    const fullSrc = photo.src.replace('w=600', 'w=1400').replace('q=70', 'q=85');
+    // Update the current (centre) image
+    if (dom.lbImage) {
+      dom.lbImage.src = toFullRes(photo.src);
+      dom.lbImage.alt = photo.alt;
+    }
 
-    dom.lbImage.src = fullSrc;
-    dom.lbImage.alt = photo.alt;
-    dom.lbCounter.textContent = `${idx + 1} / ${photos.length}`;
+    // Keep counter synchronised: "3 / 12"
+    if (dom.lbCounter) {
+      dom.lbCounter.textContent = `${idx + 1} / ${photos.length}`;
+    }
 
-    // Prev/Next button states
-    dom.lbPrev.disabled = idx === 0;
-    dom.lbNext.disabled = idx === photos.length - 1;
+    // Prev / Next button accessibility states
+    if (dom.lbPrev) {
+      dom.lbPrev.disabled = (idx === 0);
+      dom.lbPrev.setAttribute('aria-label', 'Previous photo');
+      dom.lbPrev.setAttribute('aria-disabled', String(idx === 0));
+    }
+    if (dom.lbNext) {
+      dom.lbNext.disabled = (idx === photos.length - 1);
+      dom.lbNext.setAttribute('aria-label', 'Next photo');
+      dom.lbNext.setAttribute('aria-disabled', String(idx === photos.length - 1));
+    }
+
+    // Reset strip to centre then pre-load neighbours
+    resetStripPosition();
+    if (lbStrip) loadAdjacentImages();
   }
+
+  /* ─── Navigation ── */
 
   function lightboxPrev() {
     if (state.lightboxIndex > 0) {
@@ -465,6 +676,44 @@
       state.lightboxIndex++;
       renderLightboxImage();
     }
+  }
+
+  /**
+   * Complete a mobile swipe gesture in the given direction.
+   *
+   * @param {'prev'|'next'} direction
+   * @param {number} swipeDx - Final swipe drag offset (px)
+   */
+  function navigateSwipe(direction, swipeDx) {
+    if (!lbStrip) {
+      if (direction === 'next') lightboxNext();
+      else lightboxPrev();
+      return;
+    }
+
+    const targetPercent = direction === 'next' ? '-66.666667%' : '0%';
+    const fromTransform = `translateX(calc(-33.333333% + ${swipeDx}px))`;
+
+    // Snap to the current finger position without transition
+    lbStrip.style.transition = 'none';
+    lbStrip.style.transform  = fromTransform;
+
+    void lbStrip.offsetWidth; // Force reflow
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const dur            = prefersReduced ? 1 : 240;
+
+    lbStrip.style.transition = `transform ${dur}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+    lbStrip.style.transform  = `translateX(${targetPercent})`;
+
+    setTimeout(() => {
+      if (direction === 'next') {
+        if (state.lightboxIndex < state.lightboxPhotos.length - 1) state.lightboxIndex++;
+      } else {
+        if (state.lightboxIndex > 0) state.lightboxIndex--;
+      }
+      renderLightboxImage();
+    }, dur);
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -539,7 +788,139 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     KEYBOARD & TOUCH
+     SWIPE NAVIGATION — Pointer Events API
+     ───────────────────────────────────────────────────────────
+     Uses PointerEvents for consistent behaviour across touchscreens,
+     styluses, tablets and hybrid devices.
+
+     Architecture: a 3-slot image strip (prev | curr | next) lives
+     inside .lb-image-wrap (overflow:hidden). Swiping translates the
+     strip in real-time; releasing either completes the navigation or
+     springs back to centre. Axis detection prevents vertical scrolling
+     from triggering photo navigation.
+  ═══════════════════════════════════════════════════════════ */
+
+  function initSwipe() {
+    const lb = dom.lightbox;
+    if (!lb) return;
+
+    lb.addEventListener('pointerdown',   onSwipeDown);
+    lb.addEventListener('pointermove',   onSwipeMove, { passive: false });
+    lb.addEventListener('pointerup',     onSwipeUp);
+    lb.addEventListener('pointercancel', onSwipeCancel);
+  }
+
+  function onSwipeDown(e) {
+    // Ignore events originating from interactive controls
+    if (e.target.closest('button') || e.target.closest('[role="button"]')) return;
+    if (swipeGesture.active) return;
+    // Mouse: primary button only
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    swipeGesture.active     = true;
+    swipeGesture.pointerId  = e.pointerId;
+    swipeGesture.startX     = e.clientX;
+    swipeGesture.startY     = e.clientY;
+    swipeGesture.deltaX     = 0;
+    swipeGesture.axisLocked = false;
+    swipeGesture.cancelled  = false;
+
+    // Capture pointer so events keep firing even if finger leaves the element
+    try { dom.lightbox.setPointerCapture(e.pointerId); } catch (_) {}
+
+    // If a navigation animation is mid-way, snap it to the centre position
+    if (lbStrip) {
+      lbStrip.style.transition = 'none';
+      lbStrip.style.transform  = 'translateX(-33.333333%)';
+    }
+  }
+
+  function onSwipeMove(e) {
+    if (!swipeGesture.active || swipeGesture.pointerId !== e.pointerId) return;
+    if (swipeGesture.cancelled) return;
+
+    const dx    = e.clientX - swipeGesture.startX;
+    const dy    = e.clientY - swipeGesture.startY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    /* ── Axis determination (wait for ≥ 8 px of movement) ── */
+    if (!swipeGesture.axisLocked) {
+      if (absDx < 8 && absDy < 8) return; // Not enough movement yet
+
+      if (absDy > absDx) {
+        // Vertical dominant → cancel; let the page scroll normally
+        swipeGesture.cancelled = true;
+        return;
+      }
+      // Horizontal dominant → lock into swipe mode
+      swipeGesture.axisLocked = true;
+    }
+
+    // Prevent background page scroll during a horizontal swipe
+    e.preventDefault();
+
+    swipeGesture.deltaX = dx;
+    if (!lbStrip) return;
+
+    const photos = state.lightboxPhotos;
+    const idx    = state.lightboxIndex;
+    let   effDx  = dx;
+
+    // Rubber-band resistance at first / last photo edges
+    if ((dx > 0 && idx === 0) || (dx < 0 && idx === photos.length - 1)) {
+      effDx = dx * 0.2; // Only 20 % of the drag is applied
+    }
+
+    lbStrip.style.transition = 'none';
+    lbStrip.style.transform  = `translateX(calc(-33.333333% + ${effDx}px))`;
+  }
+
+  function onSwipeUp(e) {
+    if (!swipeGesture.active || swipeGesture.pointerId !== e.pointerId) return;
+    swipeGesture.active = false;
+
+    if (swipeGesture.cancelled || !swipeGesture.axisLocked) {
+      // Pure vertical gesture or too short — nothing to do for the strip
+      return;
+    }
+
+    const dx        = swipeGesture.deltaX;
+    const sw        = slideWidth();
+    // Threshold: 25 % of slot width, capped at 75 px to prevent over-sensitivity
+    const threshold = Math.min(sw * 0.25, 75);
+    const photos    = state.lightboxPhotos;
+    const idx       = state.lightboxIndex;
+
+    if (dx < -threshold && idx < photos.length - 1) {
+      // Swiped left far enough → advance to next photo
+      navigateSwipe('next', dx);
+    } else if (dx > threshold && idx > 0) {
+      // Swiped right far enough → go back to previous photo
+      navigateSwipe('prev', dx);
+    } else {
+      // Not far enough → spring back to current photo
+      springBack();
+    }
+  }
+
+  function onSwipeCancel(e) {
+    if (!swipeGesture.active || swipeGesture.pointerId !== e.pointerId) return;
+    swipeGesture.active = false;
+    springBack();
+  }
+
+  /** Animate the strip back to the centre slot (spring-back on incomplete swipe). */
+  function springBack() {
+    if (!lbStrip) return;
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const dur            = prefersReduced ? 1 : 280;
+    lbStrip.style.transition = `transform ${dur}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+    lbStrip.style.transform  = 'translateX(-33.333333%)';
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     KEYBOARD
   ═══════════════════════════════════════════════════════════ */
 
   function initKeyboard() {
@@ -547,27 +928,13 @@
       if (state.lightboxOpen) {
         if (e.key === 'ArrowLeft')  lightboxPrev();
         if (e.key === 'ArrowRight') lightboxNext();
-        if (e.key === 'Escape')     closeLightbox();
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeLightbox();
+        }
       }
       if (state.videoOpen && e.key === 'Escape') closeVideoModal();
     });
-  }
-
-  function initTouch() {
-    if (!dom.lightbox) return;
-    dom.lightbox.addEventListener('touchstart', e => {
-      state.touchStartX = e.touches[0].clientX;
-      state.touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    dom.lightbox.addEventListener('touchend', e => {
-      const dx = e.changedTouches[0].clientX - state.touchStartX;
-      const dy = e.changedTouches[0].clientY - state.touchStartY;
-      // Only react if horizontal swipe dominates vertical movement
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-        dx < 0 ? lightboxNext() : lightboxPrev();
-      }
-    }, { passive: true });
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -588,7 +955,7 @@
   ═══════════════════════════════════════════════════════════ */
 
   function initEventListeners() {
-    // Back button
+    // Back button (event view → gallery grid)
     dom.backBtn?.addEventListener('click', () => {
       setHash('');
       document.title = 'Gallery | Ashraf Islamia Model Public Secondary School';
@@ -600,9 +967,9 @@
     dom.lbPrev?.addEventListener('click',  lightboxPrev);
     dom.lbNext?.addEventListener('click',  lightboxNext);
 
-    // Lightbox: click backdrop to close
+    // Lightbox: click backdrop only to close (never when clicking the photo or image containers)
     dom.lightbox?.addEventListener('click', e => {
-      if (e.target === dom.lightbox || e.target.classList.contains('lb-backdrop')) {
+      if (e.target.classList.contains('lb-backdrop')) {
         closeLightbox();
       }
     });
@@ -615,10 +982,21 @@
       }
     });
 
-    // Hash change (browser back/forward)
-    window.addEventListener('popstate', route);
+    // Hash change / browser back-forward
+    window.addEventListener('popstate', e => {
+      if (state.lightboxOpen) {
+        // Android/browser Back pressed while lightbox is open.
+        // We've already navigated away from the {galleryLightbox:true} state,
+        // so clear the flag before closing to avoid a double history.back() call.
+        state.lbHistoryPushed = false;
+        doCloseLightbox();
+        return;
+      }
+      // Normal gallery routing (event ↔ grid)
+      route();
+    });
 
-    // Empty state reset button (delegated)
+    // Empty state reset button (event-delegated)
     document.addEventListener('click', e => {
       if (e.target && (e.target.id === 'gallery-empty-reset')) {
         state.activeCategory = 'all';
@@ -649,7 +1027,7 @@
     initFilters();
     initEventListeners();
     initKeyboard();
-    initTouch();
+    initSwipe();
     // Route based on current hash
     route();
     // Trigger reveal on initial load
