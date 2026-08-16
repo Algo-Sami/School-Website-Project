@@ -447,12 +447,10 @@
   let isNavigating = false;
 
   /**
-   * Build the [prev | curr | next] 3-slot strip inside lb-image-wrap on first open.
+   * Builds/resets the [prev | curr | next] 3-slot strip inside lb-image-wrap cleanly.
    * Strip width = 300% of the wrap; translateX positions the visible slot.
    */
-  function initLbStrip() {
-    if (lbStrip && slides.length === 3) return; // Built once per page load
-
+  function resetLbStrip() {
     const wrap = dom.lbImageWrap;
     if (!wrap) return;
     wrap.innerHTML = '';
@@ -477,6 +475,7 @@
     }
 
     wrap.appendChild(lbStrip);
+    resetStripPosition();
   }
 
   /** Snap strip to show the centre (current) slot — no animation. */
@@ -509,23 +508,18 @@
     // Current slide (middle slot, index 1)
     if (photos[idx]) {
       const src = toFullRes(photos[idx].src);
-      if (currImg.dataset.loadedSrc !== src) {
-        currImg.src = src;
-        currImg.alt = photos[idx].alt;
-        currImg.dataset.loadedSrc = src;
-      }
+      currImg.src = src;
+      currImg.alt = photos[idx].alt;
+      currImg.dataset.loadedSrc = src;
       currSlide.style.visibility = '';
-      dom.lbImage = currImg;
     }
 
     // Prev slide (left slot, index 0)
     if (idx > 0 && photos[idx - 1]) {
       const src = toFullRes(photos[idx - 1].src);
-      if (prevImg.dataset.loadedSrc !== src) {
-        prevImg.src = src;
-        prevImg.alt = photos[idx - 1].alt;
-        prevImg.dataset.loadedSrc = src;
-      }
+      prevImg.src = src;
+      prevImg.alt = photos[idx - 1].alt;
+      prevImg.dataset.loadedSrc = src;
       prevSlide.style.visibility = '';
     } else {
       prevSlide.style.visibility = 'hidden';
@@ -534,11 +528,9 @@
     // Next slide (right slot, index 2)
     if (idx < photos.length - 1 && photos[idx + 1]) {
       const src = toFullRes(photos[idx + 1].src);
-      if (nextImg.dataset.loadedSrc !== src) {
-        nextImg.src = src;
-        nextImg.alt = photos[idx + 1].alt;
-        nextImg.dataset.loadedSrc = src;
-      }
+      nextImg.src = src;
+      nextImg.alt = photos[idx + 1].alt;
+      nextImg.dataset.loadedSrc = src;
       nextSlide.style.visibility = '';
     } else {
       nextSlide.style.visibility = 'hidden';
@@ -567,6 +559,7 @@
   function openLightbox(index) {
     state.lightboxOpen  = true;
     state.lightboxIndex = index;
+    isNavigating        = false;
 
     // Save exact scroll position so we can restore it on close.
     state.savedScrollY = window.scrollY || window.pageYOffset || 0;
@@ -580,9 +573,9 @@
     dom.lightbox.hidden = false;
     dom.lightbox.setAttribute('aria-hidden', 'false');
 
-    // Build strip on first ever open
-    initLbStrip();
-    renderLightboxImage();
+    // Fresh strip initialized for the exact clicked photo
+    resetLbStrip();
+    syncSlides();
 
     // Push a history entry for back button navigation
     history.pushState({ galleryLightbox: true }, '');
@@ -614,7 +607,7 @@
     const thumb = $(`[data-index="${state.lightboxIndex}"]`, dom.photoGrid);
     thumb?.focus();
 
-    // Prepare strip for next open
+    // Reset strip
     resetStripPosition();
   }
 
@@ -627,24 +620,22 @@
     }
   }
 
-  function renderLightboxImage() {
-    resetStripPosition();
-    syncSlides();
-  }
 
   /* ─── Navigation ── */
 
   function lightboxPrev() {
     if (state.lightboxIndex > 0) {
       state.lightboxIndex--;
-      renderLightboxImage();
+      resetLbStrip();
+      syncSlides();
     }
   }
 
   function lightboxNext() {
     if (state.lightboxIndex < state.lightboxPhotos.length - 1) {
       state.lightboxIndex++;
-      renderLightboxImage();
+      resetLbStrip();
+      syncSlides();
     }
   }
 

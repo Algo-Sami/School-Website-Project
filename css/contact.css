@@ -30,7 +30,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 260px;
 }
 
 .image-placeholder img {
@@ -838,6 +837,11 @@ textarea.form-control {
   }
 
   .hero-motif {
+    margin-inline: auto;
+  }
+
+  #contact-hero .image-placeholder {
+    max-width: 480px;
     margin-inline: auto;
   }
 

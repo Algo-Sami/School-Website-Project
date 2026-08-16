@@ -976,9 +976,6 @@
 
 .lb-image-wrap {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   max-height: 100%;
   overflow: hidden;
   position: relative;
@@ -991,10 +988,11 @@
 }
 
 .lb-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   width: 300%;
-  flex: 0 0 300%;
-  flex-shrink: 0;
   height: 100%;
   will-change: transform;
   align-items: center;

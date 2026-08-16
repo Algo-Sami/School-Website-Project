@@ -51,7 +51,7 @@ const GALLERY_EVENTS = [
     videoCount:  2,
     photos: [
       { id: 'sp1',  src: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=70&auto=format&fit=crop', alt: 'Students in athletic formation during sports day', width: 4, height: 3 },
-      { id: 'sp2',  src: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=70&auto=format&fit=crop', alt: 'Young students running a race on a school track', width: 3, height: 2 },
+      { id: 'sp2',  src: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=600&q=70&auto=format&fit=crop', alt: 'Young students running a race on a school track', width: 3, height: 2 },
       { id: 'sp3',  src: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=70&auto=format&fit=crop', alt: 'Students warming up before a sporting event', width: 3, height: 4 },
       { id: 'sp4',  src: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=70&auto=format&fit=crop', alt: 'Students cheering for their teammates', width: 16, height: 9 },
       { id: 'sp5',  src: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&q=70&auto=format&fit=crop', alt: 'Students competing in a relay race', width: 4, height: 3 },
