@@ -31,7 +31,7 @@
     email:        'ashrafislamia67@gmail.com',
     facebook:     'https://www.facebook.com/share/1FzfXFNtSC/',
     youtube:      'https://youtube.com/@ashrafislamia1575',
-    logo:         BASE_URL + '/assets/images/school_logo.jpg',
+    logo:         BASE_URL + '/assets/images/school_logo.png',
     defaultImage: BASE_URL + '/assets/images/hero_building.png'
   };
 
