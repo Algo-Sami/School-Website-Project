@@ -12,8 +12,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Mount API routes at /api
+// Mount API routes at both /api and root to handle any rewrite format
 app.use('/api', routes);
+app.use('/', routes);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -22,3 +23,4 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+

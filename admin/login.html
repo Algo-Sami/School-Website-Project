@@ -109,18 +109,23 @@
           body: JSON.stringify({ username, password })
         });
 
-        const data = await res.json();
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (jsonErr) {
+          data = { error: `Server error (${res.status} ${res.statusText})` };
+        }
 
         if (res.ok && data.success) {
           window.location.href = '/admin/index.html';
         } else {
-          errorAlert.textContent = data.error || 'Authentication failed. Please try again.';
+          errorAlert.textContent = data.error || 'Authentication failed. Please check your credentials.';
           errorAlert.style.display = 'block';
           loginBtn.disabled = false;
           btnText.textContent = 'Sign In to Admin Panel';
         }
       } catch (err) {
-        errorAlert.textContent = 'Network error. Please check your connection.';
+        errorAlert.textContent = 'Connection failed: ' + (err.message || 'Unable to reach server');
         errorAlert.style.display = 'block';
         loginBtn.disabled = false;
         btnText.textContent = 'Sign In to Admin Panel';
