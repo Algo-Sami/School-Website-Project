@@ -12,6 +12,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Root & health check routes
+app.get(['/api', '/api/health', '/health', '/'], (req, res) => {
+  res.json({ status: 'ok', message: 'AIMPS School API is running' });
+});
+
 // Mount API routes at both /api and root to handle any rewrite format
 app.use('/api', routes);
 app.use('/', routes);
@@ -23,6 +28,7 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+
 
 
 
