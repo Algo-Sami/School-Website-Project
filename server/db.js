@@ -1,228 +1,263 @@
-const { DatabaseSync } = require('node:sqlite');
-const path = require('path');
-const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 
-// Ensure data directory exists
-const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  console.warn('[DB] Warning: SUPABASE_URL or SUPABASE_SERVICE_KEY is missing from environment variables.');
 }
 
-const dbPath = path.join(dataDir, 'school_gallery.db');
-const db = new DatabaseSync(dbPath);
+// Service-role client — full DB access, server-side only
+const supabase = createClient(
+  SUPABASE_URL || 'https://placeholder.supabase.co',
+  SUPABASE_SERVICE_KEY || 'placeholder',
+  {
+    auth: { persistSession: false },
+  }
+);
 
-// Enable foreign keys and WAL mode for better concurrency
-db.exec('PRAGMA foreign_keys = ON;');
-db.exec('PRAGMA journal_mode = WAL;');
+// ---------------------------------------------------------------------------
+// Seed default admin user if the table is empty
+// ---------------------------------------------------------------------------
+async function seedDefaultAdmin() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return;
+  try {
+    const { count, error } = await supabase
+      .from('admin_users')
+      .select('*', { count: 'exact', head: true });
 
-// Initialize schema
-function initSchema() {
-  // Admin users table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS admin_users (
-      id TEXT PRIMARY KEY,
-      username TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );
-  `);
+    if (error) {
+      console.error('[DB] Error checking admin_users count:', error.message);
+      return;
+    }
 
-  // Events table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS events (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      event_date TEXT NOT NULL,
-      description TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
-  `);
+    if (count === 0) {
+      const defaultUsername = process.env.ADMIN_USERNAME || 'admin';
+      const defaultPassword = process.env.ADMIN_PASSWORD || 'AimpsAdmin2026!';
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync(defaultPassword, salt);
+      const id = 'admin-' + Date.now();
 
-  // Event Media table
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS event_media (
-      id TEXT PRIMARY KEY,
-      event_id TEXT NOT NULL,
-      media_type TEXT NOT NULL CHECK(media_type IN ('image', 'video')),
-      file_url TEXT NOT NULL,
-      storage_path TEXT NOT NULL,
-      file_name TEXT,
-      file_size INTEGER,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
-    );
-  `);
+      const { error: insertError } = await supabase.from('admin_users').insert({
+        id,
+        username: defaultUsername,
+        password_hash: hash,
+      });
 
-  // Seed default admin if none exists
-  seedDefaultAdmin();
-}
-
-function seedDefaultAdmin() {
-  const checkStmt = db.prepare('SELECT COUNT(*) AS cnt FROM admin_users');
-  const result = checkStmt.get();
-  if (result && result.cnt === 0) {
-    const defaultUsername = process.env.ADMIN_USERNAME || 'admin';
-    const defaultPassword = process.env.ADMIN_PASSWORD || 'AimpsAdmin2026!';
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(defaultPassword, salt);
-    const now = new Date().toISOString();
-    const id = 'admin-' + Date.now();
-
-    const insertAdmin = db.prepare(`
-      INSERT INTO admin_users (id, username, password_hash, created_at)
-      VALUES (?, ?, ?, ?)
-    `);
-    insertAdmin.run(id, defaultUsername, hash, now);
-    console.log(`[DB] Default admin user '${defaultUsername}' initialized.`);
+      if (insertError) {
+        console.error('[DB] Failed to seed admin user:', insertError.message);
+      } else {
+        console.log(`[DB] Default admin user '${defaultUsername}' initialized.`);
+      }
+    }
+  } catch (err) {
+    console.error('[DB] Seed error:', err.message);
   }
 }
 
-// Database helper functions
+// Run seed on startup (non-blocking)
+seedDefaultAdmin().catch(console.error);
+
+// ---------------------------------------------------------------------------
+// Database helper functions (all async)
+// ---------------------------------------------------------------------------
 const dbHelpers = {
-  // Auth
-  findUserByUsername(username) {
-    const stmt = db.prepare('SELECT * FROM admin_users WHERE username = ?');
-    return stmt.get(username);
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  async findUserByUsername(username) {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('*')
+      .eq('username', username)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
   },
 
-  findUserById(id) {
-    const stmt = db.prepare('SELECT id, username, created_at FROM admin_users WHERE id = ?');
-    return stmt.get(id);
+  async findUserById(id) {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('id, username, created_at')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
   },
 
-  // Stats
-  getStats() {
-    const eventsCount = db.prepare('SELECT COUNT(*) AS total FROM events').get().total;
-    const photosCount = db.prepare("SELECT COUNT(*) AS total FROM event_media WHERE media_type = 'image'").get().total;
-    const videosCount = db.prepare("SELECT COUNT(*) AS total FROM event_media WHERE media_type = 'video'").get().total;
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  async getStats() {
+    const [eventsRes, photosRes, videosRes] = await Promise.all([
+      supabase.from('events').select('*', { count: 'exact', head: true }),
+      supabase.from('event_media').select('*', { count: 'exact', head: true }).eq('media_type', 'image'),
+      supabase.from('event_media').select('*', { count: 'exact', head: true }).eq('media_type', 'video'),
+    ]);
     return {
-      totalEvents: eventsCount,
-      totalPhotos: photosCount,
-      totalVideos: videosCount,
+      totalEvents: eventsRes.count ?? 0,
+      totalPhotos: photosRes.count ?? 0,
+      totalVideos: videosRes.count ?? 0,
     };
   },
 
-  // Events CRUD
-  getAllEvents() {
-    // Get all events sorted by event_date desc, created_at desc
-    const events = db.prepare(`
-      SELECT e.*,
-        (SELECT COUNT(*) FROM event_media m WHERE m.event_id = e.id AND m.media_type = 'image') AS photoCount,
-        (SELECT COUNT(*) FROM event_media m WHERE m.event_id = e.id AND m.media_type = 'video') AS videoCount,
-        (SELECT file_url FROM event_media m WHERE m.event_id = e.id AND m.media_type = 'image' ORDER BY m.created_at ASC LIMIT 1) AS coverImage
-      FROM events e
-      ORDER BY e.event_date DESC, e.created_at DESC
-    `).all();
-    return events;
+  // ── Events ────────────────────────────────────────────────────────────────
+  async getAllEvents() {
+    const { data: events, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        event_media ( id, media_type, file_url, created_at )
+      `)
+      .order('event_date', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    return (events || []).map((e) => {
+      const media = e.event_media || [];
+      const images = media.filter((m) => m.media_type === 'image');
+      return {
+        ...e,
+        photoCount: images.length,
+        videoCount: media.filter((m) => m.media_type === 'video').length,
+        coverImage: images.length > 0 ? images[0].file_url : '',
+        event_media: undefined,
+      };
+    });
   },
 
-  getEventById(id) {
-    const event = db.prepare(`
-      SELECT e.*,
-        (SELECT COUNT(*) FROM event_media m WHERE m.event_id = e.id AND m.media_type = 'image') AS photoCount,
-        (SELECT COUNT(*) FROM event_media m WHERE m.event_id = e.id AND m.media_type = 'video') AS videoCount,
-        (SELECT file_url FROM event_media m WHERE m.event_id = e.id AND m.media_type = 'image' ORDER BY m.created_at ASC LIMIT 1) AS coverImage
-      FROM events e
-      WHERE e.id = ?
-    `).get(id);
+  async getEventById(id) {
+    const { data: event, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        event_media ( * )
+      `)
+      .eq('id', id)
+      .maybeSingle();
 
+    if (error) throw new Error(error.message);
     if (!event) return null;
 
-    const media = db.prepare(`
-      SELECT * FROM event_media
-      WHERE event_id = ?
-      ORDER BY created_at ASC
-    `).all(id);
+    const media = (event.event_media || []).sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at)
+    );
 
-    const photos = media.filter(m => m.media_type === 'image').map(m => ({
-      id: m.id,
-      src: m.file_url,
-      alt: event.title + ' photo',
-      fileName: m.file_name,
-      fileSize: m.file_size,
-      storagePath: m.storage_path,
-      createdAt: m.created_at,
-    }));
+    const photos = media
+      .filter((m) => m.media_type === 'image')
+      .map((m) => ({
+        id: m.id,
+        src: m.file_url,
+        alt: event.title + ' photo',
+        fileName: m.file_name,
+        fileSize: m.file_size,
+        storagePath: m.storage_path,
+        createdAt: m.created_at,
+      }));
 
-    const videos = media.filter(m => m.media_type === 'video').map(m => ({
-      id: m.id,
-      fileUrl: m.file_url,
-      title: m.file_name || (event.title + ' Video'),
-      fileName: m.file_name,
-      fileSize: m.file_size,
-      storagePath: m.storage_path,
-      createdAt: m.created_at,
-    }));
+    const videos = media
+      .filter((m) => m.media_type === 'video')
+      .map((m) => ({
+        id: m.id,
+        fileUrl: m.file_url,
+        title: m.file_name || event.title + ' Video',
+        fileName: m.file_name,
+        fileSize: m.file_size,
+        storagePath: m.storage_path,
+        createdAt: m.created_at,
+      }));
+
+    const images = media.filter((m) => m.media_type === 'image');
 
     return {
       ...event,
+      photoCount: photos.length,
+      videoCount: videos.length,
+      coverImage: images.length > 0 ? images[0].file_url : '',
       photos,
       videos,
+      event_media: undefined,
     };
   },
 
-  createEvent({ id, title, event_date, description }) {
+  async createEvent({ id, title, event_date, description }) {
     const now = new Date().toISOString();
-    const stmt = db.prepare(`
-      INSERT INTO events (id, title, event_date, description, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-    stmt.run(id, title, event_date, description || '', now, now);
+    const { error } = await supabase.from('events').insert({
+      id,
+      title,
+      event_date,
+      description: description || '',
+      created_at: now,
+      updated_at: now,
+    });
+    if (error) throw new Error(error.message);
     return this.getEventById(id);
   },
 
-  updateEvent(id, { title, event_date, description }) {
-    const now = new Date().toISOString();
-    const stmt = db.prepare(`
-      UPDATE events
-      SET title = ?, event_date = ?, description = ?, updated_at = ?
-      WHERE id = ?
-    `);
-    stmt.run(title, event_date, description || '', now, id);
+  async updateEvent(id, { title, event_date, description }) {
+    const { error } = await supabase
+      .from('events')
+      .update({
+        title,
+        event_date,
+        description: description || '',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+    if (error) throw new Error(error.message);
     return this.getEventById(id);
   },
 
-  deleteEvent(id) {
-    // Get all media for cleanup
-    const media = db.prepare('SELECT * FROM event_media WHERE event_id = ?').all(id);
-    // Delete event (foreign key cascade handles event_media records)
-    const stmt = db.prepare('DELETE FROM events WHERE id = ?');
-    const result = stmt.run(id);
-    return { success: result.changes > 0, media };
+  async deleteEvent(id) {
+    // Fetch media first (for storage cleanup)
+    const { data: media } = await supabase
+      .from('event_media')
+      .select('*')
+      .eq('event_id', id);
+
+    const { error } = await supabase.from('events').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+
+    return { success: true, media: media || [] };
   },
 
-  // Media CRUD
-  addMedia({ id, event_id, media_type, file_url, storage_path, file_name, file_size }) {
+  // ── Media ─────────────────────────────────────────────────────────────────
+  async addMedia({ id, event_id, media_type, file_url, storage_path, file_name, file_size }) {
     const now = new Date().toISOString();
-    const stmt = db.prepare(`
-      INSERT INTO event_media (id, event_id, media_type, file_url, storage_path, file_name, file_size, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    stmt.run(id, event_id, media_type, file_url, storage_path, file_name || '', file_size || 0, now, now);
-    return db.prepare('SELECT * FROM event_media WHERE id = ?').get(id);
+    const { data, error } = await supabase
+      .from('event_media')
+      .insert({
+        id,
+        event_id,
+        media_type,
+        file_url,
+        storage_path,
+        file_name: file_name || '',
+        file_size: file_size || 0,
+        created_at: now,
+        updated_at: now,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
   },
 
-  getMediaById(id) {
-    const stmt = db.prepare('SELECT * FROM event_media WHERE id = ?');
-    return stmt.get(id);
+  async getMediaById(id) {
+    const { data, error } = await supabase
+      .from('event_media')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
   },
 
-  deleteMedia(id) {
-    const media = db.prepare('SELECT * FROM event_media WHERE id = ?').get(id);
+  async deleteMedia(id) {
+    const media = await this.getMediaById(id);
     if (!media) return null;
-    const stmt = db.prepare('DELETE FROM event_media WHERE id = ?');
-    stmt.run(id);
+    const { error } = await supabase.from('event_media').delete().eq('id', id);
+    if (error) throw new Error(error.message);
     return media;
   },
 };
 
-// Initialize schema on load
-initSchema();
-
-module.exports = {
-  db,
-  dbHelpers,
-};
+module.exports = { supabase, dbHelpers };

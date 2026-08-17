@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
-const { dbHelpers } = require('./db');
+const { supabase, dbHelpers } = require('./db');
 const {
   COOKIE_NAME,
   generateToken,
@@ -11,15 +10,11 @@ const {
   comparePassword,
 } = require('./auth');
 
-// Storage base directory
-const UPLOADS_ROOT = path.join(__dirname, '..', 'uploads', 'gallery');
-if (!fs.existsSync(UPLOADS_ROOT)) {
-  fs.mkdirSync(UPLOADS_ROOT, { recursive: true });
-}
+const STORAGE_BUCKET = 'gallery';
 
 // Slug/ID generator
 function generateEventId(title) {
-  const baseSlug = title
+  const baseSlug = (title || 'event')
     .toLowerCase()
     .trim()
     .replace(/[^\w\s-]/g, '')
@@ -29,29 +24,8 @@ function generateEventId(title) {
   return `${baseSlug || 'event'}-${Date.now().toString(36)}-${rand}`;
 }
 
-// Multer storage engine that routes files into uploads/gallery/:eventId/images or uploads/gallery/:eventId/videos
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const eventId = req.params.id || req.body.eventId || req._tempEventId || 'temp';
-    const isVideo = file.mimetype.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.originalname);
-    const subFolder = isVideo ? 'videos' : 'images';
-    const targetDir = path.join(UPLOADS_ROOT, eventId, subFolder);
-
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
-    cb(null, targetDir);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const cleanName = path.basename(file.originalname, ext)
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '_')
-      .substring(0, 40);
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e6);
-    cb(null, `${cleanName}-${uniqueSuffix}${ext}`);
-  },
-});
+// Multer memory storage (buffers in RAM for upload to Supabase Storage)
+const storage = multer.memoryStorage();
 
 // File filter validation
 const ALLOWED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp'];
@@ -62,7 +36,7 @@ const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/webm', 'video/quicktime', 'vide
 
 function fileFilter(req, file, cb) {
   const ext = path.extname(file.originalname).toLowerCase();
-  const mime = file.mimetype.toLowerCase();
+  const mime = (file.mimetype || '').toLowerCase();
 
   const isAllowedImage = ALLOWED_IMAGE_EXTS.includes(ext) || ALLOWED_IMAGE_MIMES.includes(mime);
   const isAllowedVideo = ALLOWED_VIDEO_EXTS.includes(ext) || ALLOWED_VIDEO_MIMES.includes(mime);
@@ -78,16 +52,50 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB overall max
+    fileSize: 50 * 1024 * 1024, // 50MB max per file (Supabase Free tier limit)
     files: 50, // max 50 files per batch
   },
 });
 
-// Middleware to assign a temporary event ID before multer processes files on create
-function prepareCreateEvent(req, res, next) {
-  const title = (req.body && req.body.title) ? req.body.title : 'event';
-  req._tempEventId = generateEventId(title);
-  next();
+// Helper function to upload a buffer directly to Supabase Storage
+async function uploadToSupabaseStorage(file, eventId) {
+  const isVideo = (file.mimetype || '').startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.originalname);
+  const mediaType = isVideo ? 'video' : 'image';
+  const subFolder = isVideo ? 'videos' : 'images';
+
+  const ext = path.extname(file.originalname).toLowerCase() || (isVideo ? '.mp4' : '.jpg');
+  const cleanName = path.basename(file.originalname, ext)
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '_')
+    .substring(0, 40);
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e6);
+  const fileName = `${cleanName}-${uniqueSuffix}${ext}`;
+  const storagePath = `${eventId}/${subFolder}/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(storagePath, file.buffer, {
+      contentType: file.mimetype || (isVideo ? 'video/mp4' : 'image/jpeg'),
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload ${file.originalname}: ${uploadError.message}`);
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from(STORAGE_BUCKET)
+    .getPublicUrl(storagePath);
+
+  const fileUrl = publicUrlData ? publicUrlData.publicUrl : '';
+
+  return {
+    mediaType,
+    fileUrl,
+    storagePath,
+    fileName: file.originalname,
+    fileSize: file.size,
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -95,9 +103,9 @@ function prepareCreateEvent(req, res, next) {
 ═══════════════════════════════════════════════════════════ */
 
 // GET /api/events — Public list of events
-router.get('/events', (req, res) => {
+router.get('/events', async (req, res) => {
   try {
-    const events = dbHelpers.getAllEvents();
+    const events = await dbHelpers.getAllEvents();
     res.json({
       success: true,
       events: events.map(e => ({
@@ -122,9 +130,9 @@ router.get('/events', (req, res) => {
 });
 
 // GET /api/events/:id — Public event detail with media
-router.get('/events/:id', (req, res) => {
+router.get('/events/:id', async (req, res) => {
   try {
-    const event = dbHelpers.getEventById(req.params.id);
+    const event = await dbHelpers.getEventById(req.params.id);
     if (!event) {
       return res.status(404).json({ error: 'Gallery event not found.' });
     }
@@ -158,35 +166,40 @@ router.get('/events/:id', (req, res) => {
 ═══════════════════════════════════════════════════════════ */
 
 // POST /api/admin/login
-router.post('/admin/login', (req, res) => {
-  const { username, password } = req.body || {};
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required.' });
+router.post('/admin/login', async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required.' });
+    }
+
+    const user = await dbHelpers.findUserByUsername(username.trim());
+    if (!user || !comparePassword(password, user.password_hash)) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    const token = generateToken(user);
+
+    res.cookie(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
+
+    res.json({
+      success: true,
+      message: 'Login successful.',
+      user: {
+        id: user.id,
+        username: user.username,
+      },
+    });
+  } catch (err) {
+    console.error('[Admin API] Login error:', err);
+    res.status(500).json({ error: 'Login process error: ' + (err.message || 'Server error') });
   }
-
-  const user = dbHelpers.findUserByUsername(username.trim());
-  if (!user || !comparePassword(password, user.password_hash)) {
-    return res.status(401).json({ error: 'Invalid username or password.' });
-  }
-
-  const token = generateToken(user);
-
-  res.cookie(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: '/',
-  });
-
-  res.json({
-    success: true,
-    message: 'Login successful.',
-    user: {
-      id: user.id,
-      username: user.username,
-    },
-  });
 });
 
 // POST /api/admin/logout
@@ -212,9 +225,9 @@ router.get('/admin/me', requireAdminApi, (req, res) => {
 ═══════════════════════════════════════════════════════════ */
 
 // GET /api/admin/stats — Dashboard summary
-router.get('/admin/stats', requireAdminApi, (req, res) => {
+router.get('/admin/stats', requireAdminApi, async (req, res) => {
   try {
-    const stats = dbHelpers.getStats();
+    const stats = await dbHelpers.getStats();
     res.json({ success: true, stats });
   } catch (err) {
     console.error('[Admin API] Error getting stats:', err);
@@ -223,9 +236,9 @@ router.get('/admin/stats', requireAdminApi, (req, res) => {
 });
 
 // GET /api/admin/events — List all events for admin
-router.get('/admin/events', requireAdminApi, (req, res) => {
+router.get('/admin/events', requireAdminApi, async (req, res) => {
   try {
-    const events = dbHelpers.getAllEvents();
+    const events = await dbHelpers.getAllEvents();
     res.json({ success: true, events });
   } catch (err) {
     console.error('[Admin API] Error getting events:', err);
@@ -234,9 +247,9 @@ router.get('/admin/events', requireAdminApi, (req, res) => {
 });
 
 // GET /api/admin/events/:id — Single event with all media
-router.get('/admin/events/:id', requireAdminApi, (req, res) => {
+router.get('/admin/events/:id', requireAdminApi, async (req, res) => {
   try {
-    const event = dbHelpers.getEventById(req.params.id);
+    const event = await dbHelpers.getEventById(req.params.id);
     if (!event) {
       return res.status(404).json({ error: 'Event not found.' });
     }
@@ -252,81 +265,57 @@ router.post('/admin/events', requireAdminApi, (req, res, next) => {
   upload.array('media', 50)(req, res, function (err) {
     if (err) {
       if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ error: 'File exceeds maximum upload size limit (100MB).' });
+        return res.status(400).json({ error: 'File exceeds maximum upload size limit (50MB).' });
       }
       return res.status(400).json({ error: err.message || 'File upload failed.' });
     }
     next();
   });
-}, (req, res) => {
+}, async (req, res) => {
   try {
     const { title, event_date, description } = req.body || {};
 
     if (!title || !title.trim()) {
-      // Clean up uploaded files if title validation failed
-      if (req.files && req.files.length > 0) {
-        req.files.forEach(f => {
-          if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
-        });
-      }
       return res.status(400).json({ error: 'Event Name (title) is required.' });
     }
 
     if (!event_date || !event_date.trim()) {
-      if (req.files && req.files.length > 0) {
-        req.files.forEach(f => {
-          if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
-        });
-      }
       return res.status(400).json({ error: 'Event Date is required.' });
     }
 
     const eventId = generateEventId(title);
 
-    // If files were uploaded during this request, rename/move them if needed or use generated eventId
-    // Let's create the event record
-    dbHelpers.createEvent({
+    // Create event in database
+    await dbHelpers.createEvent({
       id: eventId,
       title: title.trim(),
       event_date: event_date.trim(),
       description: description ? description.trim() : '',
     });
 
-    // Save uploaded media files
+    // Upload media files to Supabase Storage if present
     if (req.files && req.files.length > 0) {
-      req.files.forEach(file => {
-        const isVideo = file.mimetype.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.originalname);
-        const mediaType = isVideo ? 'video' : 'image';
-        const subFolder = isVideo ? 'videos' : 'images';
-        
-        // Target permanent folder
-        const finalFolder = path.join(UPLOADS_ROOT, eventId, subFolder);
-        if (!fs.existsSync(finalFolder)) {
-          fs.mkdirSync(finalFolder, { recursive: true });
-        }
-        
-        const finalFilePath = path.join(finalFolder, path.basename(file.path));
-        if (file.path !== finalFilePath) {
-          fs.renameSync(file.path, finalFilePath);
-        }
+      for (const file of req.files) {
+        try {
+          const uploaded = await uploadToSupabaseStorage(file, eventId);
+          const mediaId = 'm-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 7);
 
-        const mediaId = 'm-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 7);
-        const fileUrl = `/uploads/gallery/${eventId}/${subFolder}/${path.basename(finalFilePath)}`;
-        const storagePath = path.relative(path.join(__dirname, '..'), finalFilePath).replace(/\\/g, '/');
-
-        dbHelpers.addMedia({
-          id: mediaId,
-          event_id: eventId,
-          media_type: mediaType,
-          file_url: fileUrl,
-          storage_path: storagePath,
-          file_name: file.originalname,
-          file_size: file.size,
-        });
-      });
+          await dbHelpers.addMedia({
+            id: mediaId,
+            event_id: eventId,
+            media_type: uploaded.mediaType,
+            file_url: uploaded.fileUrl,
+            storage_path: uploaded.storagePath,
+            file_name: uploaded.fileName,
+            file_size: uploaded.fileSize,
+          });
+        } catch (uploadErr) {
+          console.error('[Storage Error]', uploadErr);
+        }
+      }
     }
 
-    const createdEvent = dbHelpers.getEventById(eventId);
+    const createdEvent = await dbHelpers.getEventById(eventId);
     res.status(201).json({
       success: true,
       message: 'Event created successfully.',
@@ -343,23 +332,17 @@ router.post('/admin/events/:id/media', requireAdminApi, (req, res, next) => {
   upload.array('media', 50)(req, res, function (err) {
     if (err) {
       if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ error: 'File exceeds maximum upload size limit (100MB).' });
+        return res.status(400).json({ error: 'File exceeds maximum upload size limit (50MB).' });
       }
       return res.status(400).json({ error: err.message || 'File upload failed.' });
     }
     next();
   });
-}, (req, res) => {
+}, async (req, res) => {
   try {
     const eventId = req.params.id;
-    const event = dbHelpers.getEventById(eventId);
+    const event = await dbHelpers.getEventById(eventId);
     if (!event) {
-      // Clean up uploaded files
-      if (req.files && req.files.length > 0) {
-        req.files.forEach(f => {
-          if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
-        });
-      }
       return res.status(404).json({ error: 'Event not found.' });
     }
 
@@ -368,39 +351,24 @@ router.post('/admin/events/:id/media', requireAdminApi, (req, res, next) => {
     }
 
     const addedMedia = [];
-    req.files.forEach(file => {
-      const isVideo = file.mimetype.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.originalname);
-      const mediaType = isVideo ? 'video' : 'image';
-      const subFolder = isVideo ? 'videos' : 'images';
-
-      const finalFolder = path.join(UPLOADS_ROOT, eventId, subFolder);
-      if (!fs.existsSync(finalFolder)) {
-        fs.mkdirSync(finalFolder, { recursive: true });
-      }
-
-      const finalFilePath = path.join(finalFolder, path.basename(file.path));
-      if (file.path !== finalFilePath) {
-        fs.renameSync(file.path, finalFilePath);
-      }
-
+    for (const file of req.files) {
+      const uploaded = await uploadToSupabaseStorage(file, eventId);
       const mediaId = 'm-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 7);
-      const fileUrl = `/uploads/gallery/${eventId}/${subFolder}/${path.basename(finalFilePath)}`;
-      const storagePath = path.relative(path.join(__dirname, '..'), finalFilePath).replace(/\\/g, '/');
 
-      const record = dbHelpers.addMedia({
+      const record = await dbHelpers.addMedia({
         id: mediaId,
         event_id: eventId,
-        media_type: mediaType,
-        file_url: fileUrl,
-        storage_path: storagePath,
-        file_name: file.originalname,
-        file_size: file.size,
+        media_type: uploaded.mediaType,
+        file_url: uploaded.fileUrl,
+        storage_path: uploaded.storagePath,
+        file_name: uploaded.fileName,
+        file_size: uploaded.fileSize,
       });
 
       addedMedia.push(record);
-    });
+    }
 
-    const updatedEvent = dbHelpers.getEventById(eventId);
+    const updatedEvent = await dbHelpers.getEventById(eventId);
     res.json({
       success: true,
       message: `Uploaded ${addedMedia.length} media file(s) successfully.`,
@@ -414,26 +382,23 @@ router.post('/admin/events/:id/media', requireAdminApi, (req, res, next) => {
 });
 
 // DELETE /api/admin/media/:id — Delete a single photo or video
-router.delete('/admin/media/:id', requireAdminApi, (req, res) => {
+router.delete('/admin/media/:id', requireAdminApi, async (req, res) => {
   try {
     const mediaId = req.params.id;
-    const media = dbHelpers.getMediaById(mediaId);
+    const media = await dbHelpers.getMediaById(mediaId);
     if (!media) {
       return res.status(404).json({ error: 'Media file not found.' });
     }
 
     // Delete record from DB
-    dbHelpers.deleteMedia(mediaId);
+    await dbHelpers.deleteMedia(mediaId);
 
-    // Delete physical file from storage
+    // Delete file from Supabase Storage
     if (media.storage_path) {
-      const fullPath = path.join(__dirname, '..', media.storage_path);
-      if (fs.existsSync(fullPath)) {
-        try {
-          fs.unlinkSync(fullPath);
-        } catch (err) {
-          console.warn('[Storage] Warning: Failed to unlink file:', fullPath, err.message);
-        }
+      try {
+        await supabase.storage.from(STORAGE_BUCKET).remove([media.storage_path]);
+      } catch (storageErr) {
+        console.warn('[Storage] Warning: Failed to remove file from storage:', media.storage_path, storageErr.message);
       }
     }
 
@@ -448,41 +413,30 @@ router.delete('/admin/media/:id', requireAdminApi, (req, res) => {
   }
 });
 
-// DELETE /api/admin/events/:id — Delete entire event, all media records, and physical files
-router.delete('/admin/events/:id', requireAdminApi, (req, res) => {
+// DELETE /api/admin/events/:id — Delete entire event, all media records, and storage files
+router.delete('/admin/events/:id', requireAdminApi, async (req, res) => {
   try {
     const eventId = req.params.id;
-    const event = dbHelpers.getEventById(eventId);
+    const event = await dbHelpers.getEventById(eventId);
     if (!event) {
       return res.status(404).json({ error: 'Event not found.' });
     }
 
     // Delete from DB (returns associated media)
-    const result = dbHelpers.deleteEvent(eventId);
+    const result = await dbHelpers.deleteEvent(eventId);
 
-    // Delete all media files on disk
+    // Delete all media files from Supabase Storage
     if (result.media && result.media.length > 0) {
-      result.media.forEach(m => {
-        if (m.storage_path) {
-          const fullPath = path.join(__dirname, '..', m.storage_path);
-          if (fs.existsSync(fullPath)) {
-            try {
-              fs.unlinkSync(fullPath);
-            } catch (err) {
-              console.warn('[Storage] Warning: could not delete file:', fullPath);
-            }
-          }
-        }
-      });
-    }
+      const storagePaths = result.media
+        .map(m => m.storage_path)
+        .filter(Boolean);
 
-    // Delete event directory recursively
-    const eventDir = path.join(UPLOADS_ROOT, eventId);
-    if (fs.existsSync(eventDir)) {
-      try {
-        fs.rmSync(eventDir, { recursive: true, force: true });
-      } catch (err) {
-        console.warn('[Storage] Warning: could not remove event folder:', eventDir);
+      if (storagePaths.length > 0) {
+        try {
+          await supabase.storage.from(STORAGE_BUCKET).remove(storagePaths);
+        } catch (storageErr) {
+          console.warn('[Storage] Warning: could not remove files from storage:', storageErr.message);
+        }
       }
     }
 

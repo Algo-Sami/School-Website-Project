@@ -9,6 +9,7 @@
     "serve-static": "npx --yes serve . --listen 3000 --no-clipboard"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
