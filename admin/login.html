@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Portal Login | Ashraf Islamia Model Public School</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin/css/admin.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg" />
+</head>
+<body class="login-page">
+
+  <div class="login-card">
+    <div class="login-header">
+      <img src="/assets/images/school_logo.png" alt="AIMPS Logo" class="login-logo" />
+      <h1 class="login-title">Admin Portal</h1>
+      <p class="login-subtitle">Ashraf Islamia Model Public School</p>
+    </div>
+
+    <div id="login-error" class="login-error-alert" role="alert"></div>
+
+    <form id="admin-login-form">
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form-control"
+          placeholder="Enter administrator username"
+          required
+          autofocus
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <div class="password-input-wrap">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            placeholder="Enter your password"
+            required
+            autocomplete="current-password"
+          />
+          <button type="button" id="toggle-password" class="password-toggle-btn" aria-label="Toggle password visibility">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" id="login-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+        <span id="btn-text">Sign In to Admin Panel</span>
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.5rem; border-top: 1px solid #f1f5f9; padding-top: 1.25rem;">
+      <a href="/" class="admin-link-public" style="background: transparent; color: var(--admin-text-muted);">
+        ← Back to Public Website
+      </a>
+    </div>
+  </div>
+
+  <script src="/admin/js/admin.js"></script>
+  <script>
+    // Password toggle
+    const toggleBtn = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('password');
+    toggleBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+    });
+
+    // Handle Login
+    const form = document.getElementById('admin-login-form');
+    const errorAlert = document.getElementById('login-error');
+    const loginBtn = document.getElementById('login-btn');
+    const btnText = document.getElementById('btn-text');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.style.display = 'none';
+      errorAlert.textContent = '';
+      
+      const username = form.username.value.trim();
+      const password = form.password.value;
+
+      if (!username || !password) {
+        errorAlert.textContent = 'Please enter both username and password.';
+        errorAlert.style.display = 'block';
+        return;
+      }
+
+      loginBtn.disabled = true;
+      btnText.textContent = 'Signing in...';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          window.location.href = '/admin/index.html';
+        } else {
+          errorAlert.textContent = data.error || 'Authentication failed. Please try again.';
+          errorAlert.style.display = 'block';
+          loginBtn.disabled = false;
+          btnText.textContent = 'Sign In to Admin Panel';
+        }
+      } catch (err) {
+        errorAlert.textContent = 'Network error. Please check your connection.';
+        errorAlert.style.display = 'block';
+        loginBtn.disabled = false;
+        btnText.textContent = 'Sign In to Admin Panel';
+      }
+    });
+
+    // Check if already logged in
+    fetch('/api/admin/me')
+      .then(res => {
+        if (res.ok) window.location.href = '/admin/index.html';
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>

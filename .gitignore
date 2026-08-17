@@ -36,3 +36,15 @@ desktop.ini
 # ── Logs ─────────────────────────────────────────────
 logs/
 *.log
+
+# ── Backend: Database ─────────────────────────────────
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# ── Backend: Uploaded Media ───────────────────────────
+uploads/
+
+# ── Test files ────────────────────────────────────────
+test_gallery_api.js

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create New Event | Ashraf Islamia Model Public School</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin/css/admin.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg" />
+</head>
+<body>
+
+  <!-- Admin Header -->
+  <header class="admin-header">
+    <div class="admin-header-container">
+      <a href="/admin/index.html" class="admin-brand">
+        <img src="/assets/images/school_logo.png" alt="AIMPS" class="admin-logo" />
+        <div class="admin-brand-text">
+          <h1>AIMPS Administration</h1>
+          <span>Gallery Event Management</span>
+        </div>
+      </a>
+      <div class="admin-nav-actions">
+        <a href="/gallery.html" target="_blank" class="admin-link-public">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          View Public Gallery
+        </a>
+        <button onclick="handleAdminLogout()" class="btn-logout">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <nav class="admin-breadcrumb" aria-label="Breadcrumb">
+      <a href="/admin/index.html">Dashboard</a>
+      <span>/</span>
+      <a href="/admin/events.html">Gallery Events</a>
+      <span>/</span>
+      <span>Create New Event</span>
+    </nav>
+
+    <div class="admin-page-header">
+      <div>
+        <h2 class="admin-page-title">Create New Gallery Event</h2>
+        <p class="admin-page-subtitle">Publish a new school event album and upload initial photographs and videos.</p>
+      </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+      <form id="create-event-form">
+        
+        <div class="form-group">
+          <label for="title" class="form-label">
+            Event Name <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            class="form-control"
+            placeholder="e.g. Annual Function 2026, Sports Gala, Independence Day Celebration"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="event_date" class="form-label">
+            Event Date <span class="required">*</span>
+          </label>
+          <input
+            type="date"
+            id="event_date"
+            name="event_date"
+            class="form-control"
+            style="max-width: 260px;"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="description" class="form-label">
+            Description <span class="form-label-hint">(Optional)</span>
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            class="form-control"
+            placeholder="Brief summary or highlights of the event..."
+          ></textarea>
+        </div>
+
+        <!-- Media Upload Dropzone -->
+        <div class="form-group" style="margin-top: 2rem;">
+          <label class="form-label">
+            Media Upload (Photos & Videos)
+            <span class="form-label-hint">Supported: JPG, PNG, WEBP, MP4, WEBM, MOV (Max 100MB per file)</span>
+          </label>
+
+          <div class="dropzone-container" id="dropzone">
+            <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <div class="dropzone-title">Click to select files or drag & drop here</div>
+            <p class="dropzone-desc">Select multiple photos and videos to attach to this event album.</p>
+            <input
+              type="file"
+              id="file-input"
+              class="dropzone-input"
+              multiple
+              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,video/x-matroska"
+            />
+          </div>
+
+          <!-- Pre-upload selected file previews -->
+          <div id="previews-container" class="previews-grid" style="display: none;"></div>
+
+          <!-- Upload Progress -->
+          <div id="upload-progress" class="upload-progress-container" style="display: none;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+              <span id="progress-status">Uploading event and media files...</span>
+              <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div id="progress-fill" class="progress-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--admin-border); padding-top: 1.5rem;">
+          <a href="/admin/events.html" class="btn btn-outline">Cancel</a>
+          <button type="submit" id="submit-btn" class="btn btn-gold">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="submit-btn-text">Create Event & Upload Media</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="/admin/js/admin.js"></script>
+  <script>
+    let selectedFiles = [];
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const previewsContainer = document.getElementById('previews-container');
+    const form = document.getElementById('create-event-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitBtnText = document.getElementById('submit-btn-text');
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressFill = document.getElementById('progress-fill');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressStatus = document.getElementById('progress-status');
+
+    // Default today's date
+    document.getElementById('event_date').value = new Date().toISOString().split('T')[0];
+
+    // Check Auth
+    checkAdminAuth();
+
+    // Dropzone interactions
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        addFiles(Array.from(e.dataTransfer.files));
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files && fileInput.files.length > 0) {
+        addFiles(Array.from(fileInput.files));
+        fileInput.value = '';
+      }
+    });
+
+    const ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.mp4', '.webm', '.mov', '.mkv'];
+
+    function addFiles(files) {
+      let rejected = 0;
+      files.forEach(file => {
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+        const isAllowed = ALLOWED_EXTS.includes(ext) || file.type.startsWith('image/') || file.type.startsWith('video/');
+        if (!isAllowed) {
+          rejected++;
+          return;
+        }
+
+        // Avoid adding exact duplicate references
+        const isDuplicate = selectedFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
+        if (!isDuplicate) {
+          selectedFiles.push(file);
+        }
+      });
+
+      if (rejected > 0) {
+        showToast(`${rejected} file(s) rejected due to unsupported format.`, 'error');
+      }
+
+      renderPreviews();
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      renderPreviews();
+    }
+
+    function renderPreviews() {
+      if (selectedFiles.length === 0) {
+        previewsContainer.style.display = 'none';
+        previewsContainer.innerHTML = '';
+        return;
+      }
+
+      previewsContainer.style.display = 'grid';
+      previewsContainer.innerHTML = selectedFiles.map((file, idx) => {
+        const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
+        const objectUrl = URL.createObjectURL(file);
+        
+        return `
+          <div class="preview-item">
+            <div class="preview-thumb">
+              ${isVideo ? `
+                <video src="${objectUrl}" preload="metadata" muted></video>
+                <div class="preview-type-tag" style="background:#0284c7;">Video</div>
+              ` : `
+                <img src="${objectUrl}" alt="${escapeHtml(file.name)}" />
+                <div class="preview-type-tag" style="background:#10b981;">Photo</div>
+              `}
+              <button type="button" class="preview-remove-btn" onclick="removeFile(${idx})" title="Remove file">
+                &times;
+              </button>
+            </div>
+            <div class="preview-meta">
+              <div class="preview-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
+              <div class="preview-size">${formatBytes(file.size)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Submit handler with XMLHttpRequest for real progress tracking
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const title = form.title.value.trim();
+      const event_date = form.event_date.value.trim();
+      const description = form.description.value.trim();
+
+      if (!title) {
+        showToast('Event Name is required.', 'error');
+        return;
+      }
+      if (!event_date) {
+        showToast('Event Date is required.', 'error');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtnText.textContent = 'Processing...';
+      uploadProgress.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressPercent.textContent = '0%';
+      progressStatus.textContent = 'Uploading event details and files...';
+
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('event_date', event_date);
+      formData.append('description', description);
+
+      selectedFiles.forEach(file => {
+        formData.append('media', file);
+      });
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/admin/events', true);
+
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable) {
+          const percent = Math.round((evt.loaded / evt.total) * 100);
+          progressFill.style.width = percent + '%';
+          progressPercent.textContent = percent + '%';
+          if (percent === 100) {
+            progressStatus.textContent = 'Saving to database and organizing files...';
+          }
+        }
+      };
+
+      xhr.onload = () => {
+        submitBtn.disabled = false;
+        submitBtnText.textContent = 'Create Event & Upload Media';
+
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+            showToast('Event created successfully!', 'success');
+            setTimeout(() => {
+              window.location.href = `/admin/event-detail.html?id=${data.event.id}`;
+            }, 700);
+          } else {
+            showToast(data.error || 'Failed to create event.', 'error');
+          }
+        } catch (err) {
+          showToast('An unexpected response was received from the server.', 'error');
+        }
+      };
+
+      xhr.onerror = () => {
+        submitBtn.disabled = false;
+        submitBtnText.textContent = 'Create Event & Upload Media';
+        showToast('Network error during upload.', 'error');
+      };
+
+      xhr.send(formData);
+    });
+  </script>
+</body>
+</html>

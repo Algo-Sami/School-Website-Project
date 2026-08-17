@@ -4,11 +4,20 @@
   "description": "Official website of Ashraf Islamia Model Public Secondary School",
   "private": true,
   "scripts": {
-    "dev": "npx --yes serve . --listen 3000 --no-clipboard",
-    "start": "npx --yes serve . --listen 3000",
-    "open": "start http://localhost:3000"
+    "dev": "node server.js",
+    "start": "node server.js",
+    "serve-static": "npx --yes serve . --listen 3000 --no-clipboard"
   },
-  "keywords": ["school", "education", "website"],
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
+  },
+  "keywords": ["school", "education", "website", "admin", "gallery"],
   "author": "Ashraf Islamia Model Public Secondary School",
   "license": "UNLICENSED"
 }

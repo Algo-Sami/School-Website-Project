@@ -3,11 +3,11 @@
  * Ashraf Islamia Model Public Secondary School
  *
  * Handles:
- *  - Main gallery listing (event albums)
- *  - Event detail view
+ *  - Main gallery listing (data-driven from /api/events)
+ *  - Event detail view (data-driven from /api/events/:id)
  *  - Category filtering
  *  - Photo lightbox (keyboard + pointer/touch swipe)
- *  - Video modal
+ *  - Video modal with HTML5 video player support
  *  - Loading / skeleton states
  *  - URL hash-based routing (/gallery.html or /gallery.html#event-slug)
  *  - Scroll reveal
@@ -30,6 +30,7 @@
     videoOpen:       false,
     savedScrollY:    0,        // page scroll position saved before lightbox opens
     lbHistoryPushed: false,    // true when we pushed a history entry for the lightbox
+    eventsLoading:   false,
   };
 
   /* ─── Swipe gesture tracking ─────────────────────────── */
@@ -48,8 +49,6 @@
 
   /* ═══════════════════════════════════════════════════════════
      SHARED SCROLL REVEAL OBSERVER
-     Single instance reused across all triggerReveal() calls —
-     prevents memory leaks from repeated new IntersectionObserver.
   ═══════════════════════════════════════════════════════════ */
 
   let revealObserver = null;
@@ -108,12 +107,31 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
+     DATA FETCHING
+  ═══════════════════════════════════════════════════════════ */
+
+  async function fetchEventsFromApi() {
+    state.eventsLoading = true;
+    try {
+      const res = await fetch('/api/events');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.events)) {
+          window.GALLERY_EVENTS = data.events;
+        }
+      }
+    } catch (err) {
+      console.warn('[Gallery] Failed to fetch events from API, using fallback data:', err);
+    } finally {
+      state.eventsLoading = false;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
      ROUTING — hash-based SPA
   ═══════════════════════════════════════════════════════════ */
 
   function readHash() {
-    // gallery.html#sports-day-2026  → show event
-    // gallery.html                  → show grid
     return window.location.hash.replace('#', '').trim();
   }
 
@@ -121,13 +139,28 @@
     history.pushState(null, '', slug ? `#${slug}` : '#');
   }
 
-  function route() {
+  async function route() {
     const slug = readHash();
     if (slug) {
-      const event = (window.GALLERY_EVENTS || []).find(e => e.id === slug);
+      // Find event or fetch if needed
+      let event = (window.GALLERY_EVENTS || []).find(e => e.id === slug);
       if (event) {
-        showEventView(event);
+        await showEventView(event);
         return;
+      } else {
+        // Try fetching individual event
+        try {
+          const res = await fetch(`/api/events/${slug}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.event) {
+              await showEventView(data.event);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('[Gallery] Route event lookup error:', e);
+        }
       }
     }
     showGalleryView();
@@ -140,8 +173,8 @@
   function showGalleryView() {
     state.currentView = 'grid';
     state.currentEvent = null;
-    dom.galleryView.hidden = false;
-    dom.eventView.hidden   = true;
+    if (dom.galleryView) dom.galleryView.hidden = false;
+    if (dom.eventView)   dom.eventView.hidden   = true;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     renderAlbums();
     requestAnimationFrame(() => triggerReveal(dom.galleryView));
@@ -167,12 +200,12 @@
       dom.albumGrid.innerHTML = events.map((ev, i) => buildAlbumCard(ev, i)).join('');
       // Attach click listeners
       $$('.album-card', dom.albumGrid).forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', async () => {
           const slug = card.dataset.eventId;
           const event = (window.GALLERY_EVENTS || []).find(e => e.id === slug);
           if (event) {
             setHash(slug);
-            showEventView(event);
+            await showEventView(event);
           }
         });
         card.addEventListener('keydown', e => {
@@ -184,7 +217,7 @@
       });
       // Trigger reveal animations
       requestAnimationFrame(() => triggerReveal(dom.albumGrid));
-    }, 300);
+    }, 250);
   }
 
   function buildSkeletons(count) {
@@ -204,38 +237,49 @@
     `).join('');
   }
 
-  // Map stagger index to utility delay class (defined in style.css)
   const CARD_DELAY_CLASSES = ['', 'delay-80', 'delay-160'];
 
   function buildAlbumCard(ev, index) {
     const delayClass = CARD_DELAY_CLASSES[index % 3] || '';
+    const coverHtml = ev.coverImage ? `
+      <img
+        src="${ev.coverImage}"
+        alt="${ev.coverAlt || ev.name || ev.title}"
+        class="album-card-img"
+        loading="lazy"
+        decoding="async"
+      />
+    ` : `
+      <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg, #183359 0%, #0f2340 100%);color:#94a3b8;gap:8px;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+    `;
+
     return `
       <article
         class="album-card reveal-stagger reveal${delayClass ? ' ' + delayClass : ''}"
         data-event-id="${ev.id}"
         tabindex="0"
         role="button"
-        aria-label="View ${ev.name} — ${ev.photoCount} photos, ${ev.videoCount} videos"
+        aria-label="View ${ev.name || ev.title} — ${ev.photoCount || 0} photos, ${ev.videoCount || 0} videos"
       >
         <div class="album-card-img-wrap">
-          <img
-            src="${ev.coverImage}"
-            alt="${ev.coverAlt}"
-            class="album-card-img"
-            loading="lazy"
-            decoding="async"
-          />
+          ${coverHtml}
           <div class="album-card-overlay" aria-hidden="true">
             <span class="album-view-label">View Album →</span>
           </div>
-          <div class="album-card-category" aria-hidden="true">${capitalise(ev.category)}</div>
+          <div class="album-card-category" aria-hidden="true">${capitalise(ev.category || 'Events')}</div>
         </div>
         <div class="album-card-body">
           <div class="album-card-meta">
-            <time class="album-card-date" datetime="${ev.year}">${ev.date}</time>
+            <time class="album-card-date" datetime="${ev.year || ''}">${ev.date || ''}</time>
           </div>
-          <h3 class="album-card-title">${ev.name}</h3>
-          <p class="album-card-desc">${ev.description}</p>
+          <h3 class="album-card-title">${ev.name || ev.title}</h3>
+          <p class="album-card-desc">${ev.description || ''}</p>
           <div class="album-card-counts" aria-label="Media count">
             <span class="album-count-badge">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
@@ -243,9 +287,9 @@
                 <circle cx="8.5" cy="8.5" r="1.5"/>
                 <polyline points="21 15 16 10 5 21"/>
               </svg>
-              ${ev.photoCount} Photos
+              ${ev.photoCount || 0} Photos
             </span>
-            ${ev.videoCount > 0 ? `
+            ${(ev.videoCount > 0) ? `
             <span class="album-count-badge">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <polygon points="23 7 16 12 23 17 23 7"/>
@@ -280,30 +324,50 @@
      EVENT DETAIL VIEW
   ═══════════════════════════════════════════════════════════ */
 
-  function showEventView(event) {
+  async function showEventView(event) {
+    // If event object doesn't have photos or videos array populated, fetch details from API
+    if (!event.photos || !event.videos) {
+      try {
+        const res = await fetch(`/api/events/${event.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.event) {
+            event = data.event;
+          }
+        }
+      } catch (err) {
+        console.warn('[Gallery] Error loading full event details:', err);
+      }
+    }
+
     state.currentView  = 'event';
     state.currentEvent = event;
-    dom.galleryView.hidden = true;
-    dom.eventView.hidden   = false;
+    if (dom.galleryView) dom.galleryView.hidden = true;
+    if (dom.eventView)   dom.eventView.hidden   = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Update document title for SEO
-    document.title = `${event.name} | Ashraf Islamia Model Public Secondary School`;
+    document.title = `${event.name || event.title} | Ashraf Islamia Model Public Secondary School`;
 
     // Populate header
-    if (dom.eventTitle)    dom.eventTitle.textContent    = event.name;
+    if (dom.eventTitle)    dom.eventTitle.textContent    = event.name || event.title;
     if (dom.eventDate)     dom.eventDate.textContent     = event.date;
-    if (dom.eventDesc)     dom.eventDesc.textContent     = event.description;
-    if (dom.eventPhotoCnt) dom.eventPhotoCnt.textContent = `${event.photoCount} Photo${event.photoCount !== 1 ? 's' : ''}`;
-    if (dom.eventVideoCnt) dom.eventVideoCnt.textContent = `${event.videoCount} Video${event.videoCount !== 1 ? 's' : ''}`;
+    if (dom.eventDesc)     dom.eventDesc.textContent     = event.description || '';
+    if (dom.eventPhotoCnt) dom.eventPhotoCnt.textContent = `${(event.photos || []).length} Photo${(event.photos || []).length !== 1 ? 's' : ''}`;
+    if (dom.eventVideoCnt) dom.eventVideoCnt.textContent = `${(event.videos || []).length} Video${(event.videos || []).length !== 1 ? 's' : ''}`;
 
     // Cover image
     if (dom.eventCoverImg) {
-      dom.eventCoverImg.src = event.coverImage.replace('w=800', 'w=1200');
-      dom.eventCoverImg.alt = event.coverAlt;
+      if (event.coverImage) {
+        dom.eventCoverImg.src = event.coverImage.includes('w=800') ? event.coverImage.replace('w=800', 'w=1200') : event.coverImage;
+        dom.eventCoverImg.alt = event.coverAlt || (event.name || event.title);
+        dom.eventCoverImg.style.display = '';
+      } else {
+        dom.eventCoverImg.style.display = 'none';
+      }
     }
 
-    // Build photo grid (skeleton → real)
+    // Build photo grid
     renderPhotoGrid(event);
 
     // Build video grid
@@ -311,7 +375,7 @@
 
     // Show/hide video section
     if (dom.videoSection) {
-      dom.videoSection.hidden = event.videoCount === 0;
+      dom.videoSection.hidden = (!event.videos || event.videos.length === 0);
     }
 
     requestAnimationFrame(() => triggerReveal(dom.eventView));
@@ -319,19 +383,30 @@
 
   function renderPhotoGrid(event) {
     if (!dom.photoGrid) return;
+    const photos = event.photos || [];
+
+    if (photos.length === 0) {
+      dom.photoGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; color: #64748b;">
+          No photos available for this event.
+        </div>
+      `;
+      state.lightboxPhotos = [];
+      return;
+    }
 
     // Skeleton
-    dom.photoGrid.innerHTML = Array.from({ length: Math.min(event.photos.length, 6) }, () => `
+    dom.photoGrid.innerHTML = Array.from({ length: Math.min(photos.length, 6) }, () => `
       <div class="photo-skeleton" aria-hidden="true">
         <div class="skeleton-img"></div>
       </div>
     `).join('');
 
     setTimeout(() => {
-      dom.photoGrid.innerHTML = event.photos.map((photo, i) => buildPhotoThumb(photo, i, event)).join('');
+      dom.photoGrid.innerHTML = photos.map((photo, i) => buildPhotoThumb(photo, i, event)).join('');
 
       // Prepare lightbox photos array
-      state.lightboxPhotos = event.photos;
+      state.lightboxPhotos = photos;
 
       $$('.photo-thumb', dom.photoGrid).forEach(thumb => {
         thumb.addEventListener('click', () => openLightbox(parseInt(thumb.dataset.index, 10)));
@@ -341,25 +416,26 @@
       });
 
       requestAnimationFrame(() => triggerReveal(dom.photoGrid));
-    }, 300);
+    }, 250);
   }
 
-  // Photo stagger delay classes mapping (0, 50, 100, 160, 200, 300 ms)
   const PHOTO_DELAY_CLASSES = ['', 'delay-50', 'delay-100', 'delay-160', 'delay-200', 'delay-300'];
 
   function buildPhotoThumb(photo, index, event) {
     const delayClass = PHOTO_DELAY_CLASSES[index % 6] || '';
+    const altText = photo.alt || (event.name || event.title) + ' photo ' + (index + 1);
+
     return `
       <div
         class="photo-thumb reveal-stagger reveal${delayClass ? ' ' + delayClass : ''}"
         data-index="${index}"
         tabindex="0"
         role="button"
-        aria-label="View photo ${index + 1} of ${event.photos.length}: ${photo.alt}"
+        aria-label="View photo ${index + 1} of ${event.photos.length}: ${altText}"
       >
         <img
           src="${photo.src}"
-          alt="${photo.alt}"
+          alt="${altText}"
           loading="lazy"
           decoding="async"
           class="photo-thumb-img"
@@ -374,13 +450,19 @@
   }
 
   function renderVideoGrid(event) {
-    if (!dom.videoGrid || !event.videos.length) return;
-    dom.videoGrid.innerHTML = event.videos.map((vid, i) => buildVideoCard(vid, i)).join('');
+    if (!dom.videoGrid) return;
+    const videos = event.videos || [];
+    if (videos.length === 0) {
+      dom.videoGrid.innerHTML = '';
+      return;
+    }
+
+    dom.videoGrid.innerHTML = videos.map((vid, i) => buildVideoCard(vid, i)).join('');
 
     $$('.video-card', dom.videoGrid).forEach(card => {
       card.addEventListener('click', () => {
         const idx = parseInt(card.dataset.index, 10);
-        openVideoModal(event.videos[idx]);
+        openVideoModal(videos[idx]);
       });
       card.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
@@ -388,29 +470,52 @@
     });
   }
 
-  // Video stagger delay classes mapping
   const VIDEO_DELAY_CLASSES = ['', 'delay-100', 'delay-200'];
 
   function buildVideoCard(vid, index) {
     const delayClass = VIDEO_DELAY_CLASSES[index % 3] || '';
+    const title = vid.title || 'Event Video';
+    
+    let thumbHtml = '';
+    if (vid.thumbnail) {
+      thumbHtml = `
+        <img
+          src="${vid.thumbnail}"
+          alt="${vid.thumbnailAlt || title}"
+          loading="lazy"
+          decoding="async"
+          width="640"
+          height="360"
+          class="video-card-thumb"
+        />
+      `;
+    } else if (vid.fileUrl) {
+      thumbHtml = `
+        <video
+          src="${vid.fileUrl}#t=0.5"
+          preload="metadata"
+          class="video-card-thumb"
+          style="width:100%;height:100%;object-fit:cover;"
+        ></video>
+      `;
+    } else {
+      thumbHtml = `
+        <div style="width:100%;height:100%;background:#0f2340;display:flex;align-items:center;justify-content:center;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </div>
+      `;
+    }
+
     return `
       <div
         class="video-card reveal-stagger reveal${delayClass ? ' ' + delayClass : ''}"
         data-index="${index}"
         tabindex="0"
         role="button"
-        aria-label="Play video: ${vid.title}"
+        aria-label="Play video: ${title}"
       >
         <div class="video-card-thumb-wrap">
-          <img
-            src="${vid.thumbnail}"
-            alt="${vid.thumbnailAlt}"
-            loading="lazy"
-            decoding="async"
-            width="640"
-            height="360"
-            class="video-card-thumb"
-          />
+          ${thumbHtml}
           <div class="video-card-play" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
               <polygon points="5 3 19 12 5 21 5 3"/>
@@ -420,7 +525,7 @@
           <div class="video-card-overlay" aria-hidden="true"></div>
         </div>
         <div class="video-card-body">
-          <h4 class="video-card-title">${vid.title}</h4>
+          <h4 class="video-card-title">${title}</h4>
         </div>
       </div>
     `;
@@ -430,26 +535,21 @@
      LIGHTBOX
   ═══════════════════════════════════════════════════════════ */
 
-  /* ─── Utilities ───────────────────────────────────────── */
-
-  /** Convert thumbnail URL to full-resolution URL. */
   function toFullRes(src) {
-    return src.replace('w=600', 'w=1400').replace('q=70', 'q=85');
+    if (!src) return '';
+    if (src.includes('unsplash.com')) {
+      return src.replace('w=600', 'w=1400').replace('q=70', 'q=85');
+    }
+    return src;
   }
 
-  /** Width of one slide slot (= lb-image-wrap client width). */
   function slideWidth() {
     return dom.lbImageWrap ? dom.lbImageWrap.clientWidth : window.innerWidth;
   }
 
-  /* ─── 3-slot virtual strip buffer ────────────────────────── */
-  let slides       = [];   // [slide0, slide1, slide2] DOM element array in current strip order
+  let slides       = [];
   let isNavigating = false;
 
-  /**
-   * Builds/resets the [prev | curr | next] 3-slot strip inside lb-image-wrap cleanly.
-   * Strip width = 300% of the wrap; translateX positions the visible slot.
-   */
   function resetLbStrip() {
     const wrap = dom.lbImageWrap;
     if (!wrap) return;
@@ -478,19 +578,12 @@
     resetStripPosition();
   }
 
-  /** Snap strip to show the centre (current) slot — no animation. */
   function resetStripPosition() {
     if (!lbStrip) return;
     lbStrip.style.transition = 'none';
     lbStrip.style.transform  = 'translateX(-33.333333%)';
   }
 
-  /**
-   * Synchronises the 3 slide slots:
-   * slides[0] = prev photo (off-screen left)
-   * slides[1] = curr photo (visible in centre)
-   * slides[2] = next photo (off-screen right)
-   */
   function syncSlides() {
     if (!lbStrip || slides.length < 3) return;
     const photos = state.lightboxPhotos;
@@ -509,7 +602,7 @@
     if (photos[idx]) {
       const src = toFullRes(photos[idx].src);
       currImg.src = src;
-      currImg.alt = photos[idx].alt;
+      currImg.alt = photos[idx].alt || 'Photo';
       currImg.dataset.loadedSrc = src;
       currSlide.style.visibility = '';
     }
@@ -518,7 +611,7 @@
     if (idx > 0 && photos[idx - 1]) {
       const src = toFullRes(photos[idx - 1].src);
       prevImg.src = src;
-      prevImg.alt = photos[idx - 1].alt;
+      prevImg.alt = photos[idx - 1].alt || 'Photo';
       prevImg.dataset.loadedSrc = src;
       prevSlide.style.visibility = '';
     } else {
@@ -529,7 +622,7 @@
     if (idx < photos.length - 1 && photos[idx + 1]) {
       const src = toFullRes(photos[idx + 1].src);
       nextImg.src = src;
-      nextImg.alt = photos[idx + 1].alt;
+      nextImg.alt = photos[idx + 1].alt || 'Photo';
       nextImg.dataset.loadedSrc = src;
       nextSlide.style.visibility = '';
     } else {
@@ -554,60 +647,52 @@
     }
   }
 
-  /* ─── Open / Close ─────────────────────────────────────── */
-
   function openLightbox(index) {
     state.lightboxOpen  = true;
     state.lightboxIndex = index;
     isNavigating        = false;
 
-    // Save exact scroll position so we can restore it on close.
     state.savedScrollY = window.scrollY || window.pageYOffset || 0;
 
-    // Lock body scroll.
     document.body.style.position = 'fixed';
     document.body.style.top      = `-${state.savedScrollY}px`;
     document.body.style.width    = '100%';
     document.body.style.overflow = 'hidden';
 
-    dom.lightbox.hidden = false;
-    dom.lightbox.setAttribute('aria-hidden', 'false');
+    if (dom.lightbox) {
+      dom.lightbox.hidden = false;
+      dom.lightbox.setAttribute('aria-hidden', 'false');
+    }
 
-    // Fresh strip initialized for the exact clicked photo
     resetLbStrip();
     syncSlides();
 
-    // Push a history entry for back button navigation
     history.pushState({ galleryLightbox: true }, '');
     state.lbHistoryPushed = true;
 
-    dom.lbClose.focus();
+    dom.lbClose?.focus();
   }
 
-  /**
-   * Perform the actual visual close.
-   */
   function doCloseLightbox() {
     if (!state.lightboxOpen) return;
     state.lightboxOpen    = false;
     state.lbHistoryPushed = false;
     isNavigating          = false;
 
-    dom.lightbox.hidden = true;
-    dom.lightbox.setAttribute('aria-hidden', 'true');
+    if (dom.lightbox) {
+      dom.lightbox.hidden = true;
+      dom.lightbox.setAttribute('aria-hidden', 'true');
+    }
 
-    // Restore scroll position exactly
     document.body.style.position = '';
     document.body.style.top      = '';
     document.body.style.width    = '';
     document.body.style.overflow = '';
     window.scrollTo(0, state.savedScrollY);
 
-    // Return keyboard focus to the thumbnail that opened this photo
     const thumb = $(`[data-index="${state.lightboxIndex}"]`, dom.photoGrid);
     thumb?.focus();
 
-    // Reset strip
     resetStripPosition();
   }
 
@@ -619,9 +704,6 @@
       doCloseLightbox();
     }
   }
-
-
-  /* ─── Navigation ── */
 
   function lightboxPrev() {
     if (state.lightboxIndex > 0) {
@@ -639,13 +721,6 @@
     }
   }
 
-  /**
-   * Complete a mobile swipe gesture in the given direction with zero-flicker
-   * buffer slot rotation.
-   *
-   * @param {'prev'|'next'} direction
-   * @param {number} swipeDx - Final swipe drag offset (px)
-   */
   function navigateSwipe(direction, swipeDx) {
     if (!lbStrip || slides.length < 3) {
       if (direction === 'next') lightboxNext();
@@ -659,7 +734,6 @@
     const targetPercent = direction === 'next' ? '-66.666667%' : '0%';
     const fromTransform = `translateX(calc(-33.333333% + ${swipeDx}px))`;
 
-    // Snap to the current finger position without transition
     lbStrip.style.transition = 'none';
     lbStrip.style.transform  = fromTransform;
 
@@ -675,7 +749,6 @@
       if (direction === 'next') {
         if (state.lightboxIndex < state.lightboxPhotos.length - 1) {
           state.lightboxIndex++;
-          // Rotate slot 0 (prev) to the end (next)
           const first = slides.shift();
           lbStrip.appendChild(first);
           slides.push(first);
@@ -683,60 +756,82 @@
       } else {
         if (state.lightboxIndex > 0) {
           state.lightboxIndex--;
-          // Rotate slot 2 (next) to the front (prev)
           const last = slides.pop();
           lbStrip.insertBefore(last, slides[0]);
           slides.unshift(last);
         }
       }
 
-      // Reset transform back to centre slot seamlessly (the newly visible image is already in the middle slot)
       lbStrip.style.transition = 'none';
       lbStrip.style.transform  = 'translateX(-33.333333%)';
 
-      // Update adjacent background slots & UI counter/buttons
       syncSlides();
       isNavigating = false;
     }, dur);
   }
 
   /* ═══════════════════════════════════════════════════════════
-     VIDEO MODAL
+     VIDEO MODAL (with HTML5 Video Player)
   ═══════════════════════════════════════════════════════════ */
 
   function openVideoModal(video) {
     state.videoOpen = true;
-    dom.videoModal.hidden = false;
-    dom.videoModal.setAttribute('aria-hidden', 'false');
+    if (dom.videoModal) {
+      dom.videoModal.hidden = false;
+      dom.videoModal.setAttribute('aria-hidden', 'false');
+    }
     document.body.style.overflow = 'hidden';
 
-    if (dom.vmTitle) dom.vmTitle.textContent = video.title;
-    // Embed a placeholder video notice (no real video upload yet)
+    if (dom.vmTitle) dom.vmTitle.textContent = video.title || 'Event Video';
     if (dom.vmEmbed) {
-      dom.vmEmbed.innerHTML = `
-        <div class="vm-placeholder">
-          <img src="${video.thumbnail}" alt="${video.thumbnailAlt}" class="vm-placeholder-img"/>
-          <div class="vm-placeholder-overlay">
-            <div class="vm-placeholder-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" width="48" height="48">
-                <circle cx="12" cy="12" r="10"/>
-                <polygon points="10 8 16 12 10 16 10 8" fill="white" stroke="none"/>
-              </svg>
-            </div>
-            <p class="vm-placeholder-label">Video content will be available once the Admin Panel is connected.</p>
-            <p class="vm-placeholder-sublabel">This is a demo placeholder for: <strong>${video.title}</strong></p>
+      if (video.fileUrl) {
+        dom.vmEmbed.innerHTML = `
+          <div style="width:100%;max-width:960px;margin:0 auto;display:flex;justify-content:center;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.6);">
+            <video
+              src="${video.fileUrl}"
+              controls
+              autoplay
+              playsinline
+              style="width:100%;max-height:75vh;outline:none;"
+            ></video>
           </div>
-        </div>
-      `;
+        `;
+      } else {
+        dom.vmEmbed.innerHTML = `
+          <div class="vm-placeholder">
+            <img src="${video.thumbnail || ''}" alt="${video.thumbnailAlt || ''}" class="vm-placeholder-img"/>
+            <div class="vm-placeholder-overlay">
+              <div class="vm-placeholder-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" width="48" height="48">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polygon points="10 8 16 12 10 16 10 8" fill="white" stroke="none"/>
+                </svg>
+              </div>
+              <p class="vm-placeholder-label">Video highlight</p>
+              <p class="vm-placeholder-sublabel"><strong>${video.title || 'Video'}</strong></p>
+            </div>
+          </div>
+        `;
+      }
     }
     dom.vmClose?.focus();
   }
 
   function closeVideoModal() {
     state.videoOpen = false;
-    dom.videoModal.hidden = true;
-    dom.videoModal.setAttribute('aria-hidden', 'true');
+    if (dom.videoModal) {
+      dom.videoModal.hidden = true;
+      dom.videoModal.setAttribute('aria-hidden', 'true');
+    }
     document.body.style.overflow = '';
+    if (dom.vmEmbed) {
+      const vid = dom.vmEmbed.querySelector('video');
+      if (vid) {
+        vid.pause();
+        vid.src = '';
+      }
+      dom.vmEmbed.innerHTML = '';
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -744,7 +839,6 @@
   ═══════════════════════════════════════════════════════════ */
 
   function initFilters() {
-    // Build filter buttons from category data
     const filterWrap = $('#filter-wrap');
     if (!filterWrap || !window.GALLERY_CATEGORIES) return;
 
@@ -756,7 +850,6 @@
       >${cat.label}</button>
     `).join('');
 
-    // Update cached buttons
     dom.filterBtns = $$('.gallery-filter-btn');
 
     dom.filterBtns.forEach(btn => {
@@ -772,16 +865,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     SWIPE NAVIGATION — Pointer Events API
-     ───────────────────────────────────────────────────────────
-     Uses PointerEvents for consistent behaviour across touchscreens,
-     styluses, tablets and hybrid devices.
-
-     Architecture: a 3-slot image strip (prev | curr | next) lives
-     inside .lb-image-wrap (overflow:hidden). Swiping translates the
-     strip in real-time; releasing either completes the navigation or
-     springs back to centre. Axis detection prevents vertical scrolling
-     from triggering photo navigation.
+     SWIPE NAVIGATION
   ═══════════════════════════════════════════════════════════ */
 
   function initSwipe() {
@@ -795,10 +879,8 @@
   }
 
   function onSwipeDown(e) {
-    // Ignore events originating from interactive controls
     if (e.target.closest('button') || e.target.closest('[role="button"]')) return;
     if (swipeGesture.active || isNavigating) return;
-    // Mouse: primary button only
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     swipeGesture.active     = true;
@@ -809,10 +891,8 @@
     swipeGesture.axisLocked = false;
     swipeGesture.cancelled  = false;
 
-    // Capture pointer so events keep firing even if finger leaves the element
     try { dom.lightbox.setPointerCapture(e.pointerId); } catch (_) {}
 
-    // If a navigation animation is mid-way, snap it to the centre position
     if (lbStrip) {
       lbStrip.style.transition = 'none';
       lbStrip.style.transform  = 'translateX(-33.333333%)';
@@ -828,20 +908,15 @@
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
 
-    /* ── Axis determination (wait for ≥ 8 px of movement) ── */
     if (!swipeGesture.axisLocked) {
-      if (absDx < 8 && absDy < 8) return; // Not enough movement yet
-
+      if (absDx < 8 && absDy < 8) return;
       if (absDy > absDx) {
-        // Vertical dominant → cancel; let the page scroll normally
         swipeGesture.cancelled = true;
         return;
       }
-      // Horizontal dominant → lock into swipe mode
       swipeGesture.axisLocked = true;
     }
 
-    // Prevent background page scroll during a horizontal swipe
     e.preventDefault();
 
     swipeGesture.deltaX = dx;
@@ -851,9 +926,8 @@
     const idx    = state.lightboxIndex;
     let   effDx  = dx;
 
-    // Rubber-band resistance at first / last photo edges
     if ((dx > 0 && idx === 0) || (dx < 0 && idx === photos.length - 1)) {
-      effDx = dx * 0.2; // Only 20 % of the drag is applied
+      effDx = dx * 0.2;
     }
 
     lbStrip.style.transition = 'none';
@@ -865,25 +939,20 @@
     swipeGesture.active = false;
 
     if (swipeGesture.cancelled || !swipeGesture.axisLocked) {
-      // Pure vertical gesture or too short — nothing to do for the strip
       return;
     }
 
     const dx        = swipeGesture.deltaX;
     const sw        = slideWidth();
-    // Threshold: 25 % of slot width, capped at 75 px to prevent over-sensitivity
     const threshold = Math.min(sw * 0.25, 75);
     const photos    = state.lightboxPhotos;
     const idx       = state.lightboxIndex;
 
     if (dx < -threshold && idx < photos.length - 1) {
-      // Swiped left far enough → advance to next photo
       navigateSwipe('next', dx);
     } else if (dx > threshold && idx > 0) {
-      // Swiped right far enough → go back to previous photo
       navigateSwipe('prev', dx);
     } else {
-      // Not far enough → spring back to current photo
       springBack();
     }
   }
@@ -894,7 +963,6 @@
     springBack();
   }
 
-  /** Animate the strip back to the centre slot (spring-back on incomplete swipe). */
   function springBack() {
     if (!lbStrip) return;
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -951,7 +1019,7 @@
     dom.lbPrev?.addEventListener('click',  lightboxPrev);
     dom.lbNext?.addEventListener('click',  lightboxNext);
 
-    // Lightbox: click backdrop only to close (never when clicking the photo or image containers)
+    // Lightbox: click backdrop only to close
     dom.lightbox?.addEventListener('click', e => {
       if (e.target.classList.contains('lb-backdrop')) {
         closeLightbox();
@@ -969,18 +1037,14 @@
     // Hash change / browser back-forward
     window.addEventListener('popstate', e => {
       if (state.lightboxOpen) {
-        // Android/browser Back pressed while lightbox is open.
-        // We've already navigated away from the {galleryLightbox:true} state,
-        // so clear the flag before closing to avoid a double history.back() call.
         state.lbHistoryPushed = false;
         doCloseLightbox();
         return;
       }
-      // Normal gallery routing (event ↔ grid)
       route();
     });
 
-    // Empty state reset button (event-delegated)
+    // Empty state reset button
     document.addEventListener('click', e => {
       if (e.target && (e.target.id === 'gallery-empty-reset')) {
         state.activeCategory = 'all';
@@ -999,6 +1063,7 @@
   ═══════════════════════════════════════════════════════════ */
 
   function capitalise(str) {
+    if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
@@ -1006,14 +1071,19 @@
      INIT
   ═══════════════════════════════════════════════════════════ */
 
-  function init() {
+  async function init() {
     cacheDom();
     initFilters();
     initEventListeners();
     initKeyboard();
     initSwipe();
+    
+    // Fetch data from backend API
+    await fetchEventsFromApi();
+    
     // Route based on current hash
-    route();
+    await route();
+    
     // Trigger reveal on initial load
     setTimeout(() => triggerReveal(), 200);
   }
