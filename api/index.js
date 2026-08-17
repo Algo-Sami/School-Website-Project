@@ -1,0 +1,24 @@
+require('dotenv').config();
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+const routes = require('../server/routes');
+
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Mount API routes at /api
+app.use('/api', routes);
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('[API Error]', err);
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
+
+module.exports = app;
