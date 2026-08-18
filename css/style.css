@@ -733,8 +733,8 @@ body.prologue-active #prologue-spacer {
 /* ── SVG Candle Wrapper ── */
 .intro-candles-wrap {
   position: absolute;
-  width: 82%;
-  height: 68%;
+  width: 96%;
+  height: 82%;
   transform: translateY(-2%);
   display: flex;
   align-items: center;

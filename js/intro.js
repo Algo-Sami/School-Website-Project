@@ -180,11 +180,11 @@
 
     // SVG candles: fade + settle into logo candles
     if (pct < 80) {
-      if (n.wrap) { n.wrap.style.opacity = '1'; n.wrap.style.transform = 'translateY(-2%) scale(1)'; }
+      if (n.wrap) { n.wrap.style.opacity = '1'; n.wrap.style.transform = 'translateY(8%) scale(1.3)'; }
     } else {
       if (n.wrap) {
         n.wrap.style.opacity   = Math.max(0, 1 - tEased * 1.25);
-        n.wrap.style.transform = 'translateY(-2%) scale(' + (1 - tEased * 0.05) + ')';
+        n.wrap.style.transform = 'translateY(8%) scale(' + (1.3 - tEased * 0.35) + ')';
       }
     }
 
@@ -316,7 +316,7 @@
       if (n.layerGlow) n.layerGlow.style.opacity   = '';
       if (n.vignette)  n.vignette.style.opacity    = '';
       if (mc) { mc.style.opacity = '0'; mc.style.visibility = 'hidden'; mc.style.transform = 'translateY(28px)'; }
-      if (nb) { nb.style.opacity = '0'; nb.style.transform   = 'translateY(-100%)'; }
+      if (nb) { nb.style.opacity = '0'; nb.style.transform = 'translateY(-100%)'; }
     }
   }
 
@@ -463,7 +463,17 @@
           isFinished = true;
           window.removeEventListener('scroll', onScroll);
           if (animFrameId) cancelAnimationFrame(animFrameId);
-          setTimeout(function () { finish(overlay, stopParticles, false); }, 150);
+          // Snap logo to exact navbar position before hiding overlay
+          if (n.navLogo && n.introWrap && cachedNavRect && cachedIntroStartRect) {
+            var r = cachedNavRect;
+            var s = cachedIntroStartRect;
+            var finalDx = (r.left + r.width / 2) - (s.left + s.width / 2);
+            var finalDy = (r.top  + r.height / 2) - (s.top  + s.height / 2);
+            var finalSc = (r.width || 46) / (s.width || 380);
+            n.introWrap.style.transition = 'transform 150ms ease-out';
+            n.introWrap.style.transform  = 'translate(' + finalDx + 'px, ' + finalDy + 'px) scale(' + finalSc + ')';
+          }
+          setTimeout(function () { finish(overlay, stopParticles, false); }, 200);
         }
         return;
       }
