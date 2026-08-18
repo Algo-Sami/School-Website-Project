@@ -100,7 +100,7 @@
         <div class="form-group" style="margin-top: 2rem;">
           <label class="form-label">
             Media Upload (Photos & Videos)
-            <span class="form-label-hint">Supported: JPG, PNG, WEBP, MP4, WEBM, MOV (Max 100MB per file)</span>
+            <span class="form-label-hint">Supported: JPG, PNG, WEBP, MP4, WEBM, MOV (Max 50MB per file)</span>
           </label>
 
           <div class="dropzone-container" id="dropzone">
@@ -261,8 +261,28 @@
       }).join('');
     }
 
-    // Submit handler with XMLHttpRequest for real progress tracking
-    form.addEventListener('submit', (e) => {
+    // Direct browser-to-Supabase Storage upload helper using fetch
+    async function uploadSingleFileToStorage(target, file) {
+      const uploadHeaders = {
+        'Content-Type': file.type || target.mimeType || 'application/octet-stream',
+      };
+
+      const res = await fetch(target.signedUrl, {
+        method: 'PUT',
+        headers: uploadHeaders,
+        body: file,
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Storage upload failed (${res.status}): ${errText || res.statusText}`);
+      }
+
+      return true;
+    }
+
+    // Submit handler: 3-step direct upload flow
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const title = form.title.value.trim();
@@ -279,61 +299,132 @@
       }
 
       submitBtn.disabled = true;
-      submitBtnText.textContent = 'Processing...';
+      submitBtnText.textContent = 'Creating Event...';
       uploadProgress.style.display = 'block';
-      progressFill.style.width = '0%';
-      progressPercent.textContent = '0%';
-      progressStatus.textContent = 'Uploading event details and files...';
+      progressFill.style.width = '5%';
+      progressPercent.textContent = '5%';
+      progressStatus.textContent = 'Initializing event album...';
 
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('event_date', event_date);
-      formData.append('description', description);
+      try {
+        // Step 1: Initialize event on API server & get signed upload targets
+        const filesMetadata = selectedFiles.map(f => ({
+          name: f.name,
+          mimeType: f.type,
+          size: f.size,
+        }));
 
-      selectedFiles.forEach(file => {
-        formData.append('media', file);
-      });
+        const initRes = await fetch('/api/admin/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            event_date,
+            description,
+            files: filesMetadata,
+          }),
+        });
 
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/admin/events', true);
-
-      xhr.upload.onprogress = (evt) => {
-        if (evt.lengthComputable) {
-          const percent = Math.round((evt.loaded / evt.total) * 100);
-          progressFill.style.width = percent + '%';
-          progressPercent.textContent = percent + '%';
-          if (percent === 100) {
-            progressStatus.textContent = 'Saving to database and organizing files...';
-          }
-        }
-      };
-
-      xhr.onload = () => {
-        submitBtn.disabled = false;
-        submitBtnText.textContent = 'Create Event & Upload Media';
-
+        let initData;
         try {
-          const data = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && data.success) {
-            showToast('Event created successfully!', 'success');
-            setTimeout(() => {
-              window.location.href = `/admin/event-detail.html?id=${data.event.id}`;
-            }, 700);
-          } else {
-            showToast(data.error || 'Failed to create event.', 'error');
-          }
-        } catch (err) {
-          showToast('An unexpected response was received from the server.', 'error');
+          initData = await initRes.json();
+        } catch (jsonErr) {
+          throw new Error(`Server returned unexpected response (${initRes.status}).`);
         }
-      };
 
-      xhr.onerror = () => {
+        if (!initRes.ok || !initData.success) {
+          throw new Error(initData.error || 'Failed to create event.');
+        }
+
+        const createdEvent = initData.event;
+        const uploadTargets = initData.uploadTargets || [];
+        const successfulUploads = [];
+        const failedUploads = [];
+
+        // Step 2: Upload files directly to Supabase Storage
+        if (uploadTargets.length > 0) {
+          const totalFiles = uploadTargets.length;
+
+          for (let i = 0; i < totalFiles; i++) {
+            const target = uploadTargets[i];
+            const file = selectedFiles[i] || selectedFiles.find(f => f.name === target.originalName);
+
+            if (!file) {
+              failedUploads.push({ name: target.originalName, error: 'File reference missing' });
+              continue;
+            }
+
+            const currentFileNum = i + 1;
+            progressStatus.textContent = `Uploading file ${currentFileNum} of ${totalFiles}: ${file.name}...`;
+            const percent = Math.round(10 + ((currentFileNum - 0.5) / totalFiles) * 75);
+            progressFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+
+            try {
+              await uploadSingleFileToStorage(target, file);
+              successfulUploads.push({
+                storagePath: target.storagePath,
+                fileName: target.originalName,
+                fileSize: target.fileSize,
+                mediaType: target.mediaType,
+                fileUrl: target.publicUrl,
+              });
+            } catch (upErr) {
+              console.error('[Upload Error]', target.originalName, upErr);
+              failedUploads.push({ name: target.originalName, error: upErr.message });
+            }
+
+            const completedPercent = Math.round(10 + (currentFileNum / totalFiles) * 75);
+            progressFill.style.width = `${completedPercent}%`;
+            progressPercent.textContent = `${completedPercent}%`;
+          }
+        }
+
+        // Step 3: Confirm successful uploads to API server
+        if (successfulUploads.length > 0) {
+          progressStatus.textContent = 'Saving media records to database...';
+          progressFill.style.width = '92%';
+          progressPercent.textContent = '92%';
+
+          const confirmRes = await fetch(`/api/admin/events/${createdEvent.id}/media/confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uploads: successfulUploads }),
+          });
+
+          let confirmData;
+          try {
+            confirmData = await confirmRes.json();
+          } catch (cErr) {
+            console.warn('[Confirm Warning] Non-JSON response on confirm:', cErr);
+          }
+
+          if (!confirmRes.ok) {
+            console.error('[Confirm Error]', confirmData);
+            showToast('Files uploaded to storage, but some records could not be registered in DB.', 'warning');
+          }
+        }
+
+        progressFill.style.width = '100%';
+        progressPercent.textContent = '100%';
+        progressStatus.textContent = 'Done!';
+
+        if (failedUploads.length > 0) {
+          showToast(`Event created! ${successfulUploads.length} uploaded, but ${failedUploads.length} failed.`, 'warning');
+        } else {
+          showToast('Event and media created successfully!', 'success');
+        }
+
+        setTimeout(() => {
+          window.location.href = `/admin/event-detail.html?id=${createdEvent.id}`;
+        }, 800);
+
+      } catch (err) {
+        console.error('[Create Event Flow Error]', err);
+        showToast(err.message || 'An error occurred during event creation.', 'error');
         submitBtn.disabled = false;
         submitBtnText.textContent = 'Create Event & Upload Media';
-        showToast('Network error during upload.', 'error');
-      };
-
-      xhr.send(formData);
+        uploadProgress.style.display = 'none';
+      }
     });
   </script>
 </body>

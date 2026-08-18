@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const multer = require('multer');
 const { supabase, dbHelpers } = require('./db');
 const {
   COOKIE_NAME,
@@ -24,78 +23,99 @@ function generateEventId(title) {
   return `${baseSlug || 'event'}-${Date.now().toString(36)}-${rand}`;
 }
 
-// Multer memory storage (buffers in RAM for upload to Supabase Storage)
-const storage = multer.memoryStorage();
-
-// File filter validation
+// File validation rules
 const ALLOWED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp'];
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const ALLOWED_VIDEO_EXTS = ['.mp4', '.webm', '.mov', '.mkv'];
 const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska'];
 
-function fileFilter(req, file, cb) {
-  const ext = path.extname(file.originalname).toLowerCase();
-  const mime = (file.mimetype || '').toLowerCase();
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file
+const MAX_FILES_PER_BATCH = 50;
 
-  const isAllowedImage = ALLOWED_IMAGE_EXTS.includes(ext) || ALLOWED_IMAGE_MIMES.includes(mime);
-  const isAllowedVideo = ALLOWED_VIDEO_EXTS.includes(ext) || ALLOWED_VIDEO_MIMES.includes(mime);
-
-  if (isAllowedImage || isAllowedVideo) {
-    cb(null, true);
-  } else {
-    cb(new Error(`Unsupported file type: ${file.originalname}. Supported formats are JPG, PNG, WEBP, MP4, WEBM, MOV, MKV.`));
+function validateFileMetadata(file) {
+  if (!file || typeof file !== 'object') {
+    throw new Error('Invalid file payload.');
   }
-}
 
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB max per file (Supabase Free tier limit)
-    files: 50, // max 50 files per batch
-  },
-});
+  const name = String(file.name || '');
+  const ext = path.extname(name).toLowerCase();
+  const mime = String(file.mimeType || file.type || '').toLowerCase();
+  const size = Number(file.size) || 0;
 
-// Helper function to upload a buffer directly to Supabase Storage
-async function uploadToSupabaseStorage(file, eventId) {
-  const isVideo = (file.mimetype || '').startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.originalname);
+  if (size > MAX_FILE_SIZE) {
+    throw new Error(`File "${name}" exceeds 50MB size limit.`);
+  }
+
+  const isImage = ALLOWED_IMAGE_EXTS.includes(ext) || ALLOWED_IMAGE_MIMES.includes(mime);
+  const isVideo = ALLOWED_VIDEO_EXTS.includes(ext) || ALLOWED_VIDEO_MIMES.includes(mime);
+
+  if (!isImage && !isVideo) {
+    throw new Error(`Unsupported file format for "${name}". Supported formats: JPG, PNG, WEBP, MP4, WEBM, MOV, MKV.`);
+  }
+
   const mediaType = isVideo ? 'video' : 'image';
   const subFolder = isVideo ? 'videos' : 'images';
-
-  const ext = path.extname(file.originalname).toLowerCase() || (isVideo ? '.mp4' : '.jpg');
-  const cleanName = path.basename(file.originalname, ext)
+  const safeExt = ext || (isVideo ? '.mp4' : '.jpg');
+  const cleanName = path.basename(name, ext)
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '_')
-    .substring(0, 40);
+    .substring(0, 40) || 'media';
   const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e6);
-  const fileName = `${cleanName}-${uniqueSuffix}${ext}`;
-  const storagePath = `${eventId}/${subFolder}/${fileName}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(storagePath, file.buffer, {
-      contentType: file.mimetype || (isVideo ? 'video/mp4' : 'image/jpeg'),
-      upsert: true,
-    });
-
-  if (uploadError) {
-    throw new Error(`Failed to upload ${file.originalname}: ${uploadError.message}`);
-  }
-
-  const { data: publicUrlData } = supabase.storage
-    .from(STORAGE_BUCKET)
-    .getPublicUrl(storagePath);
-
-  const fileUrl = publicUrlData ? publicUrlData.publicUrl : '';
+  const fileName = `${cleanName}-${uniqueSuffix}${safeExt}`;
+  const storagePath = `${subFolder}/${fileName}`;
 
   return {
+    originalName: name,
     mediaType,
-    fileUrl,
+    subFolder,
     storagePath,
-    fileName: file.originalname,
-    fileSize: file.size,
+    fileSize: size,
+    mimeType: mime || (isVideo ? 'video/mp4' : 'image/jpeg'),
   };
+}
+
+async function createSignedUploadTargets(eventId, files = []) {
+  if (!Array.isArray(files) || files.length === 0) {
+    return [];
+  }
+
+  if (files.length > MAX_FILES_PER_BATCH) {
+    throw new Error(`Maximum ${MAX_FILES_PER_BATCH} files allowed per upload.`);
+  }
+
+  const targets = [];
+
+  for (const file of files) {
+    const meta = validateFileMetadata(file);
+    const fullStoragePath = `${eventId}/${meta.storagePath}`;
+
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .createSignedUploadUrl(fullStoragePath);
+
+    if (error) {
+      console.error('[Storage Signed URL Error]', error);
+      throw new Error(`Failed to create upload URL for ${meta.originalName}: ${error.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(fullStoragePath);
+
+    targets.push({
+      originalName: meta.originalName,
+      storagePath: fullStoragePath,
+      signedUrl: data.signedUrl,
+      token: data.token,
+      publicUrl: publicUrlData ? publicUrlData.publicUrl : '',
+      mediaType: meta.mediaType,
+      fileSize: meta.fileSize,
+      mimeType: meta.mimeType,
+    });
+  }
+
+  return targets;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -260,20 +280,10 @@ router.get('/admin/events/:id', requireAdminApi, async (req, res) => {
   }
 });
 
-// POST /api/admin/events — Create new event with optional media files
-router.post('/admin/events', requireAdminApi, (req, res, next) => {
-  upload.array('media', 50)(req, res, function (err) {
-    if (err) {
-      if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ error: 'File exceeds maximum upload size limit (50MB).' });
-      }
-      return res.status(400).json({ error: err.message || 'File upload failed.' });
-    }
-    next();
-  });
-}, async (req, res) => {
+// POST /api/admin/events — Create new event and generate signed upload URLs for files
+router.post('/admin/events', requireAdminApi, async (req, res) => {
   try {
-    const { title, event_date, description } = req.body || {};
+    const { title, event_date, description, files } = req.body || {};
 
     if (!title || !title.trim()) {
       return res.status(400).json({ error: 'Event Name (title) is required.' });
@@ -285,7 +295,7 @@ router.post('/admin/events', requireAdminApi, (req, res, next) => {
 
     const eventId = generateEventId(title);
 
-    // Create event in database
+    // Create event in database first
     await dbHelpers.createEvent({
       id: eventId,
       title: title.trim(),
@@ -293,33 +303,18 @@ router.post('/admin/events', requireAdminApi, (req, res, next) => {
       description: description ? description.trim() : '',
     });
 
-    // Upload media files to Supabase Storage if present
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        try {
-          const uploaded = await uploadToSupabaseStorage(file, eventId);
-          const mediaId = 'm-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 7);
-
-          await dbHelpers.addMedia({
-            id: mediaId,
-            event_id: eventId,
-            media_type: uploaded.mediaType,
-            file_url: uploaded.fileUrl,
-            storage_path: uploaded.storagePath,
-            file_name: uploaded.fileName,
-            file_size: uploaded.fileSize,
-          });
-        } catch (uploadErr) {
-          console.error('[Storage Error]', uploadErr);
-        }
-      }
+    // Generate signed upload targets for direct client-to-Supabase upload
+    let uploadTargets = [];
+    if (files && Array.isArray(files) && files.length > 0) {
+      uploadTargets = await createSignedUploadTargets(eventId, files);
     }
 
     const createdEvent = await dbHelpers.getEventById(eventId);
     res.status(201).json({
       success: true,
-      message: 'Event created successfully.',
+      message: 'Event initialized successfully.',
       event: createdEvent,
+      uploadTargets,
     });
   } catch (err) {
     console.error('[Admin API] Error creating event:', err);
@@ -327,18 +322,8 @@ router.post('/admin/events', requireAdminApi, (req, res, next) => {
   }
 });
 
-// POST /api/admin/events/:id/media — Upload additional photos or videos to an existing event
-router.post('/admin/events/:id/media', requireAdminApi, (req, res, next) => {
-  upload.array('media', 50)(req, res, function (err) {
-    if (err) {
-      if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ error: 'File exceeds maximum upload size limit (50MB).' });
-      }
-      return res.status(400).json({ error: err.message || 'File upload failed.' });
-    }
-    next();
-  });
-}, async (req, res) => {
+// POST /api/admin/events/:id/media — Request signed upload targets for additional media
+router.post('/admin/events/:id/media', requireAdminApi, async (req, res) => {
   try {
     const eventId = req.params.id;
     const event = await dbHelpers.getEventById(eventId);
@@ -346,23 +331,68 @@ router.post('/admin/events/:id/media', requireAdminApi, (req, res, next) => {
       return res.status(404).json({ error: 'Event not found.' });
     }
 
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: 'No files were provided for upload.' });
+    const { files } = req.body || {};
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      return res.status(400).json({ error: 'No files metadata provided.' });
+    }
+
+    const uploadTargets = await createSignedUploadTargets(eventId, files);
+
+    res.json({
+      success: true,
+      message: `Generated ${uploadTargets.length} upload target(s).`,
+      uploadTargets,
+    });
+  } catch (err) {
+    console.error('[Admin API] Error generating upload targets:', err);
+    res.status(500).json({ error: 'Failed to initialize upload. ' + (err.message || '') });
+  }
+});
+
+// POST /api/admin/events/:id/media/confirm — Confirm successfully uploaded files and store in DB
+router.post('/api/admin/events/:id/media/confirm', requireAdminApi, async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const event = await dbHelpers.getEventById(eventId);
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found.' });
+    }
+
+    const { uploads } = req.body || {};
+    if (!uploads || !Array.isArray(uploads) || uploads.length === 0) {
+      return res.status(400).json({ error: 'No upload confirmations provided.' });
     }
 
     const addedMedia = [];
-    for (const file of req.files) {
-      const uploaded = await uploadToSupabaseStorage(file, eventId);
+    const eventPrefix = `${eventId}/`;
+
+    for (const item of uploads) {
+      const storagePath = String(item.storagePath || '').trim();
+
+      // Security check: verify storage path belongs to this event and has no directory traversal
+      if (!storagePath.startsWith(eventPrefix) || storagePath.includes('..')) {
+        console.warn('[Admin API] Rejected invalid storage path in confirm:', storagePath);
+        continue;
+      }
+
+      const isVideo = item.mediaType === 'video' || storagePath.includes('/videos/');
+      const mediaType = isVideo ? 'video' : 'image';
+
+      const { data: publicUrlData } = supabase.storage
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(storagePath);
+
+      const fileUrl = item.fileUrl || (publicUrlData ? publicUrlData.publicUrl : '');
       const mediaId = 'm-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 7);
 
       const record = await dbHelpers.addMedia({
         id: mediaId,
         event_id: eventId,
-        media_type: uploaded.mediaType,
-        file_url: uploaded.fileUrl,
-        storage_path: uploaded.storagePath,
-        file_name: uploaded.fileName,
-        file_size: uploaded.fileSize,
+        media_type: mediaType,
+        file_url: fileUrl,
+        storage_path: storagePath,
+        file_name: item.fileName || path.basename(storagePath),
+        file_size: Number(item.fileSize) || 0,
       });
 
       addedMedia.push(record);
@@ -371,13 +401,13 @@ router.post('/admin/events/:id/media', requireAdminApi, (req, res, next) => {
     const updatedEvent = await dbHelpers.getEventById(eventId);
     res.json({
       success: true,
-      message: `Uploaded ${addedMedia.length} media file(s) successfully.`,
+      message: `Confirmed and registered ${addedMedia.length} media file(s).`,
       addedCount: addedMedia.length,
       event: updatedEvent,
     });
   } catch (err) {
-    console.error('[Admin API] Error uploading media:', err);
-    res.status(500).json({ error: 'Failed to upload media. ' + (err.message || '') });
+    console.error('[Admin API] Error confirming media uploads:', err);
+    res.status(500).json({ error: 'Failed to confirm media uploads. ' + (err.message || '') });
   }
 });
 

@@ -406,62 +406,149 @@
       }).join('');
     }
 
-    startUploadBtn.addEventListener('click', () => {
+    // Direct browser-to-Supabase Storage upload helper using fetch
+    async function uploadSingleFileToStorage(target, file) {
+      const uploadHeaders = {
+        'Content-Type': file.type || target.mimeType || 'application/octet-stream',
+      };
+
+      const res = await fetch(target.signedUrl, {
+        method: 'PUT',
+        headers: uploadHeaders,
+        body: file,
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Storage upload failed (${res.status}): ${errText || res.statusText}`);
+      }
+
+      return true;
+    }
+
+    startUploadBtn.addEventListener('click', async () => {
       if (newFilesToUpload.length === 0) return;
 
       startUploadBtn.disabled = true;
       startUploadBtn.textContent = 'Uploading...';
       uploadProgress.style.display = 'block';
-      progressFill.style.width = '0%';
-      progressPercent.textContent = '0%';
-      progressStatus.textContent = 'Uploading new media files...';
+      progressFill.style.width = '5%';
+      progressPercent.textContent = '5%';
+      progressStatus.textContent = 'Preparing upload targets...';
 
-      const formData = new FormData();
-      newFilesToUpload.forEach(file => {
-        formData.append('media', file);
-      });
+      try {
+        // Step 1: Request signed upload targets from API server
+        const filesMetadata = newFilesToUpload.map(f => ({
+          name: f.name,
+          mimeType: f.type,
+          size: f.size,
+        }));
 
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', `/api/admin/events/${eventId}/media`, true);
+        const initRes = await fetch(`/api/admin/events/${eventId}/media`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: filesMetadata }),
+        });
 
-      xhr.upload.onprogress = (evt) => {
-        if (evt.lengthComputable) {
-          const percent = Math.round((evt.loaded / evt.total) * 100);
-          progressFill.style.width = percent + '%';
-          progressPercent.textContent = percent + '%';
-          if (percent === 100) {
-            progressStatus.textContent = 'Processing and saving media...';
-          }
-        }
-      };
-
-      xhr.onload = () => {
-        startUploadBtn.disabled = false;
-        startUploadBtn.textContent = 'Upload Selected Files';
-
+        let initData;
         try {
-          const data = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && data.success) {
-            showToast(data.message || 'Media uploaded successfully!', 'success');
-            newFilesToUpload = [];
-            renderNewPreviews();
-            uploadProgress.style.display = 'none';
-            loadEventData();
-          } else {
-            showToast(data.error || 'Upload failed.', 'error');
-          }
-        } catch (err) {
-          showToast('An unexpected server error occurred.', 'error');
+          initData = await initRes.json();
+        } catch (jsonErr) {
+          throw new Error(`Server returned unexpected response (${initRes.status}).`);
         }
-      };
 
-      xhr.onerror = () => {
+        if (!initRes.ok || !initData.success) {
+          throw new Error(initData.error || 'Failed to initialize upload.');
+        }
+
+        const uploadTargets = initData.uploadTargets || [];
+        const successfulUploads = [];
+        const failedUploads = [];
+        const totalFiles = uploadTargets.length;
+
+        // Step 2: Upload each file directly to Supabase Storage
+        for (let i = 0; i < totalFiles; i++) {
+          const target = uploadTargets[i];
+          const file = newFilesToUpload[i] || newFilesToUpload.find(f => f.name === target.originalName);
+
+          if (!file) {
+            failedUploads.push({ name: target.originalName, error: 'File reference missing' });
+            continue;
+          }
+
+          const currentFileNum = i + 1;
+          progressStatus.textContent = `Uploading file ${currentFileNum} of ${totalFiles}: ${file.name}...`;
+          const percent = Math.round(10 + ((currentFileNum - 0.5) / totalFiles) * 75);
+          progressFill.style.width = `${percent}%`;
+          progressPercent.textContent = `${percent}%`;
+
+          try {
+            await uploadSingleFileToStorage(target, file);
+            successfulUploads.push({
+              storagePath: target.storagePath,
+              fileName: target.originalName,
+              fileSize: target.fileSize,
+              mediaType: target.mediaType,
+              fileUrl: target.publicUrl,
+            });
+          } catch (upErr) {
+            console.error('[Upload Error]', target.originalName, upErr);
+            failedUploads.push({ name: target.originalName, error: upErr.message });
+          }
+
+          const completedPercent = Math.round(10 + (currentFileNum / totalFiles) * 75);
+          progressFill.style.width = `${completedPercent}%`;
+          progressPercent.textContent = `${completedPercent}%`;
+        }
+
+        // Step 3: Confirm successful uploads to API server
+        if (successfulUploads.length > 0) {
+          progressStatus.textContent = 'Saving media records...';
+          progressFill.style.width = '92%';
+          progressPercent.textContent = '92%';
+
+          const confirmRes = await fetch(`/api/admin/events/${eventId}/media/confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uploads: successfulUploads }),
+          });
+
+          let confirmData;
+          try {
+            confirmData = await confirmRes.json();
+          } catch (cErr) {
+            console.warn('[Confirm Warning] Non-JSON response on confirm:', cErr);
+          }
+
+          if (!confirmRes.ok) {
+            console.error('[Confirm Error]', confirmData);
+            showToast('Files uploaded to storage, but could not register records in DB.', 'warning');
+          }
+        }
+
+        progressFill.style.width = '100%';
+        progressPercent.textContent = '100%';
+        progressStatus.textContent = 'Upload complete!';
+
+        if (failedUploads.length > 0) {
+          showToast(`Uploaded ${successfulUploads.length} file(s), but ${failedUploads.length} failed.`, 'warning');
+        } else {
+          showToast(`Uploaded ${successfulUploads.length} media file(s) successfully!`, 'success');
+        }
+
+        // Reset file queue and refresh event data
+        newFilesToUpload = [];
+        renderNewPreviews();
+        uploadProgress.style.display = 'none';
+        await loadEventData();
+
+      } catch (err) {
+        console.error('[Upload Flow Error]', err);
+        showToast(err.message || 'An error occurred during upload.', 'error');
+      } finally {
         startUploadBtn.disabled = false;
         startUploadBtn.textContent = 'Upload Selected Files';
-        showToast('Network error during upload.', 'error');
-      };
-
-      xhr.send(formData);
+      }
     });
 
     document.addEventListener('DOMContentLoaded', loadEventData);
