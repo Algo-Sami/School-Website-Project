@@ -229,6 +229,23 @@
       }
     }
 
+    // Fade out scroll guidance prompt as user starts scrolling
+    if (n.scrollBlock) {
+      if (pct <= 1) {
+        n.scrollBlock.style.opacity = '1';
+        n.scrollBlock.style.pointerEvents = 'auto';
+        n.scrollBlock.style.transform = 'translateY(0)';
+      } else if (pct < 8) {
+        var sbOpacity = Math.max(0, 1 - (pct - 1) / 6);
+        n.scrollBlock.style.opacity = String(sbOpacity);
+        n.scrollBlock.style.pointerEvents = sbOpacity > 0.1 ? 'auto' : 'none';
+        n.scrollBlock.style.transform = 'translateY(' + ((pct - 1) * 2) + 'px)';
+      } else {
+        n.scrollBlock.style.opacity = '0';
+        n.scrollBlock.style.pointerEvents = 'none';
+      }
+    }
+
     // Golden bloom burst when ALL candles are fully lit
     if (candlePct >= 92 && !n.bloomTriggered && n.bloomBurst) {
       n.bloomTriggered = true;
@@ -386,6 +403,7 @@
       navLogo:document.querySelector('.nav-logo-icon'),
       motto:overlay.querySelector('.intro-motto'),
       floorScene:overlay.querySelector('.floor-scene'),
+      scrollBlock:overlay.querySelector('.intro-scroll-block'),
       // Background layers dissolved in Phase C to reveal homepage
       layerNavy:overlay.querySelector('.intro-layer-navy'),
       layerGlow:overlay.querySelector('.intro-layer-glow'),
@@ -508,14 +526,21 @@
     window.addEventListener('resize', resizeHandler, { passive: true });
     resizeHandler(); // initial call
 
-    function doSkip() {
-      if (isFinished) return;
-      isFinished = true;
-      window.removeEventListener('scroll', onScroll);
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-      finish(overlay, stopParticles, true);
+    // Interactive scroll prompt handler
+    var scrollPrompt = overlay.querySelector('.intro-scroll-block');
+    if (scrollPrompt) {
+      scrollPrompt.addEventListener('click', function(e) {
+        e.stopPropagation();
+        window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' });
+      });
+      scrollPrompt.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' });
+        }
+      });
     }
-    overlay.addEventListener('click', doSkip, { once: true });
 
     keydownHandler = function onKeyDown(e) {
       if (isFinished) return;

@@ -409,16 +409,27 @@
           Knowledge begins with one light and spreads to many.
         </div>
 
-        <!-- Scroll indicator — adaptive per device -->
-        <div class="intro-scroll-block" aria-hidden="true">
-          <!-- Mouse icon — shown on tablet/desktop -->
-          <div class="intro-mouse-indicator">
-            <div class="intro-mouse-wheel"></div>
+        <!-- Scroll indicator — clearly guides the user to scroll to explore -->
+        <div class="intro-scroll-block" role="button" tabindex="0" aria-label="Scroll down to explore the website">
+          <!-- Desktop & Tablet prompt -->
+          <div class="intro-scroll-hint intro-desktop-hint">
+            <div class="intro-mouse-indicator" aria-hidden="true">
+              <div class="intro-mouse-wheel"></div>
+            </div>
+            <div class="intro-scroll-label">
+              <span class="intro-scroll-text">Scroll to explore</span>
+              <div class="intro-scroll-chevron" aria-hidden="true">
+                <span class="intro-chevron-arrow"></span>
+                <span class="intro-chevron-arrow"></span>
+              </div>
+            </div>
           </div>
-          <!-- Swipe hint — shown on phones -->
-          <div class="intro-swipe-hint">
-            <span class="intro-swipe-hint-icon">↓</span>
-            <span class="intro-swipe-hint-text">Swipe up</span>
+          <!-- Mobile touch prompt -->
+          <div class="intro-scroll-hint intro-mobile-hint">
+            <div class="intro-touch-icon" aria-hidden="true">
+              <span class="intro-touch-arrow">↓</span>
+            </div>
+            <span class="intro-scroll-text">Swipe up / Scroll to explore</span>
           </div>
         </div>
 

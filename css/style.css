@@ -899,41 +899,146 @@ body.prologue-active #prologue-spacer {
   transition: opacity 0.5s ease;
 }
 
-/* 4 — Scroll indicator block */
+/* 4 — Scroll indicator block (Interactive call to action) */
 .intro-scroll-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: clamp(24px, 3.8vh, 36px);
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: rgba(201, 168, 76, 0.07);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(201, 168, 76, 0.1);
+  cursor: pointer;
+  user-select: none;
+  opacity: 1;
+  outline: none;
+  transition: opacity 0.4s ease, transform 0.3s ease, border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  animation: prompt-float 3.2s ease-in-out infinite;
+}
+
+.intro-scroll-block:hover,
+.intro-scroll-block:focus-visible {
+  background: rgba(201, 168, 76, 0.16);
+  border-color: rgba(201, 168, 76, 0.7);
+  box-shadow: 0 6px 24px rgba(201, 168, 76, 0.28), inset 0 0 16px rgba(201, 168, 76, 0.2);
+  transform: translateY(2px);
+}
+
+.intro-scroll-hint {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 36px;
-  opacity: 1;
-  transition: opacity 0.5s ease;
+  gap: 8px;
+}
+
+.intro-desktop-hint {
+  display: none;
+}
+
+.intro-mobile-hint {
+  display: flex;
+}
+
+.intro-scroll-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.intro-scroll-text {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ebd082;
+  text-shadow: 0 0 12px rgba(235, 208, 130, 0.45);
+  line-height: 1;
+  white-space: nowrap;
 }
 
 /* Mouse icon */
 .intro-mouse-indicator {
   width: 18px;
   height: 28px;
-  border: 1.5px solid rgba(201, 168, 76, 0.45);
+  border: 1.6px solid rgba(235, 208, 130, 0.8);
   border-radius: 9px;
   position: relative;
   display: inline-block;
-  animation: mouse-breath 3s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(235, 208, 130, 0.2);
 }
 
 .intro-mouse-wheel {
   width: 3px;
   height: 6px;
-  background: var(--gold);
+  background: #ebd082;
   border-radius: 2px;
   position: absolute;
   top: 5px;
   left: 50%;
   transform: translateX(-50%);
+  animation: mouse-scroll-anim 2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
-@keyframes mouse-breath {
-  0%, 100% { opacity: 0.45; }
-  50%       { opacity: 1;    }
+@keyframes mouse-scroll-anim {
+  0%   { transform: translate(-50%, 0); opacity: 0; }
+  25%  { opacity: 1; }
+  75%  { transform: translate(-50%, 8px); opacity: 0; }
+  100% { transform: translate(-50%, 8px); opacity: 0; }
+}
+
+.intro-scroll-chevron {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 1px;
+}
+
+.intro-chevron-arrow {
+  width: 6px;
+  height: 6px;
+  border-bottom: 1.5px solid rgba(235, 208, 130, 0.9);
+  border-right: 1.5px solid rgba(235, 208, 130, 0.9);
+  transform: rotate(45deg);
+  animation: chevron-pulse 2s infinite ease-in-out;
+}
+
+.intro-chevron-arrow:nth-child(2) {
+  margin-top: -3px;
+  animation-delay: 0.25s;
+}
+
+@keyframes chevron-pulse {
+  0%, 100% { opacity: 0.35; transform: rotate(45deg) translate(0, 0); }
+  50%       { opacity: 1; transform: rotate(45deg) translate(2px, 2px); }
+}
+
+/* Touch icon for mobile */
+.intro-touch-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.intro-touch-arrow {
+  font-size: 1.2rem;
+  line-height: 1;
+  color: #ebd082;
+  animation: touch-bounce 2s ease-in-out infinite;
+}
+
+@keyframes touch-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50%       { transform: translateY(4px); opacity: 1; }
+}
+
+@keyframes prompt-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
 }
 
 /* ── Phase-based display ── */
@@ -2617,41 +2722,10 @@ address {
   line-height: 1.65;
 }
 
-/* Mouse indicator — hidden on phones, replaced by swipe hint */
+/* Scroll indicator — mobile layout */
 .intro-scroll-block {
-  margin-top: 28px;
-}
-
-.intro-mouse-indicator {
-  display: none;
-}
-
-/* Swipe indicator — phones only */
-.intro-swipe-hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  opacity: 0.6;
-  animation: swipe-pulse 2.5s ease-in-out infinite;
-}
-
-.intro-swipe-hint-icon {
-  font-size: 1.4rem;
-  line-height: 1;
-}
-
-.intro-swipe-hint-text {
-  font-size: 0.62rem;
-  font-family: var(--font-body);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(201, 168, 76, 0.7);
-}
-
-@keyframes swipe-pulse {
-  0%, 100% { opacity: 0.4; transform: translateY(0); }
-  50%       { opacity: 0.8; transform: translateY(4px); }
+  margin-top: 24px;
+  padding: 8px 18px;
 }
 
 /* ── Section padding — mobile ── */
@@ -3101,17 +3175,17 @@ address {
     margin: 14px 0 12px;
   }
 
-  /* Mouse indicator returns on tablet */
-  .intro-mouse-indicator {
-    display: inline-block;
+  /* Scroll prompt switches to desktop variant on tablet+ */
+  .intro-desktop-hint {
+    display: flex;
   }
 
-  .intro-swipe-hint {
+  .intro-mobile-hint {
     display: none;
   }
 
   .intro-scroll-block {
-    margin-top: 36px;
+    margin-top: 32px;
   }
 }
 
@@ -3675,17 +3749,16 @@ address {
   }
 
   .intro-scroll-block {
-    margin-top: 10px;
+    margin-top: 8px;
+    padding: 6px 14px;
   }
 
-  .intro-swipe-hint {
+  .intro-desktop-hint {
+    display: flex;
+  }
+
+  .intro-mobile-hint {
     display: none;
-  }
-
-  .intro-mouse-indicator {
-    display: inline-block;
-    width: 16px;
-    height: 26px;
   }
 
   /* Hero — landscape phone */
@@ -3758,9 +3831,14 @@ address {
     animation: none !important;
   }
 
-  .intro-swipe-hint {
+  .intro-scroll-block {
     animation: none !important;
-    opacity: 0.5;
+  }
+
+  .intro-mouse-wheel,
+  .intro-chevron-arrow,
+  .intro-touch-arrow {
+    animation: none !important;
   }
 }
 
