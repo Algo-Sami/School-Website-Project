@@ -22,30 +22,35 @@
       label: 'Est. Since Decades',
       headline: 'Where <em>Excellence</em><br>Finds Its Home',
       sub: 'A legacy of academic distinction, moral character, and transformative education — shaping the leaders of tomorrow.',
+      position: 'center center',
     },
     {
       image: 'assets/images/hero_classroom.png',
       label: 'Exceptional Education',
       headline: 'Learning That<br><em>Ignites</em> Potential',
       sub: 'Every classroom is a sanctuary of knowledge, guided by dedicated educators who inspire curiosity and critical thinking.',
+      position: 'center center',
     },
     {
       image: 'assets/images/hero_community_values.jpg',
       label: 'Vibrant Campus Life',
       headline: 'A Community<br>Built on <em>Values</em>',
       sub: 'Beyond academics, we nurture character, brotherhood, and a lifelong love of learning in every student we serve.',
+      position: 'center 20%',
     },
     {
       image: 'assets/images/hero_achievements.png',
       label: 'Pride & Achievement',
       headline: 'Celebrating<br><em>Every</em> Milestone',
       sub: 'Our students consistently achieve excellence in academics, competitions, and life — a testament to our institutional commitment.',
+      position: 'center center',
     },
     {
       image: 'assets/images/hero_sports_original.jpg',
       label: 'Body, Mind & Spirit',
       headline: 'Champions in<br>Every <em>Arena</em>',
       sub: 'Sport teaches discipline, teamwork, and resilience. Our students compete with distinction both on and off the field.',
+      position: 'center center',
     },
   ];
 
@@ -103,6 +108,9 @@
       const img     = document.createElement('img');
       img.alt       = slide.label;
       img.decoding  = 'async';
+      if (slide.position) {
+        img.style.objectPosition = slide.position;
+      }
 
       if (i === 0) {
         // Slide 0: load immediately with high fetch priority

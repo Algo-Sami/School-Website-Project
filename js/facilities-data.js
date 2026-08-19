@@ -16,10 +16,10 @@
       description: "Our campus provides students with a safe, supportive, and engaging learning environment equipped with facilities that encourage academic excellence, personal growth, and overall development.",
       image: {
         id: "facilities-hero-img",
-        url: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1000",
-        alt: "Ashraf Islamia Model Public Secondary School campus and learning environment",
+        url: "assets/images/facilities_hero_composite.jpg",
+        alt: "Computer Laboratory, Science Laboratory, and Library at Ashraf Islamia Model Public Secondary School",
         objectPosition: "center center",
-        temporary: true
+        temporary: false
       }
     },
 
@@ -154,8 +154,8 @@
       description: "At Ashraf Islamia Model Public School, education extends beyond textbooks. Students are encouraged to participate in activities that nurture confidence, teamwork, discipline, creativity, and leadership.",
       image: {
         id: "student-life-img",
-        url: "https://images.unsplash.com/photo-1516534775068-ba3e84589d90?w=800",
-        alt: "Students engaging in team building and co-curricular projects outside the classroom",
+        url: "assets/images/hero_sports_original.jpg",
+        alt: "Students competing in annual sports tournaments and athletic events at Ashraf Islamia Model Public School",
         objectPosition: "center center"
       },
       cards: [

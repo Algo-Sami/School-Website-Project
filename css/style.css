@@ -1308,17 +1308,21 @@ body.intro-skip #navbar {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  animation: hero-ken-burns 8s var(--ease-smooth) both;
+  object-position: center center;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: auto;
+  transform: none;
 }
 
-/* Multi-layer overlay for depth and readability */
+/* Multi-layer overlay: crisp text contrast without washing out or blurring background imagery */
 .hero-overlay {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right, rgba(10,25,47,0.75) 0%, rgba(10,25,47,0.30) 60%, transparent 100%),
-    linear-gradient(to top, rgba(10,25,47,0.70) 0%, transparent 50%);
+    linear-gradient(to right, rgba(10,25,47,0.70) 0%, rgba(10,25,47,0.30) 48%, rgba(10,25,47,0.04) 75%, transparent 100%),
+    linear-gradient(to top, rgba(10,25,47,0.55) 0%, transparent 45%);
   z-index: 1;
+  pointer-events: none;
 }
 
 /* Hero content */
@@ -2313,15 +2317,14 @@ address {
 
 /* ── Hero Section — mobile ── */
 #hero {
-  height: 100vh;   /* fallback for browsers without svh support (Safari <15.5, FF <101) */
-  height: 100svh;  /* svh excludes mobile browser chrome; preferred on modern browsers */
-  min-height: 580px;
+  min-height: 520px;
+  height: clamp(520px, 82svh, 660px);
   align-items: flex-end;
 }
 
 .hero-overlay {
   background:
-    linear-gradient(to top, rgba(5, 15, 35, 0.92) 0%, rgba(5, 15, 35, 0.65) 40%, rgba(5, 15, 35, 0.25) 100%);
+    linear-gradient(to top, rgba(5, 15, 35, 0.86) 0%, rgba(5, 15, 35, 0.45) 40%, rgba(5, 15, 35, 0.10) 72%, transparent 100%);
 }
 
 .hero-content {
@@ -2876,15 +2879,18 @@ address {
     padding: 18px var(--container-px);
   }
 
-  /* ── Hero — tablet: left-aligned, premium ── */
+  /* ── Hero — tablet & desktop: left-aligned, premium ── */
   #hero {
+    height: 100vh;
+    height: 100svh;
+    min-height: 600px;
     align-items: center;
   }
 
   .hero-overlay {
     background:
-      linear-gradient(to right, rgba(5, 15, 35, 0.80) 0%, rgba(5, 15, 35, 0.45) 55%, transparent 100%),
-      linear-gradient(to top, rgba(5, 15, 35, 0.60) 0%, transparent 55%);
+      linear-gradient(to right, rgba(5, 15, 35, 0.72) 0%, rgba(5, 15, 35, 0.32) 48%, rgba(5, 15, 35, 0.04) 75%, transparent 100%),
+      linear-gradient(to top, rgba(5, 15, 35, 0.50) 0%, transparent 45%);
   }
 
   .hero-content {

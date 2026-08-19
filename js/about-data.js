@@ -17,17 +17,17 @@
     },
     whoWeAreImage: {
       id: "about-whoweare-img",
-      url: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=1000",
-      alt: "Students learning and collaborating in an educational classroom environment",
+      url: "assets/images/about_who_we_are.jpg",
+      alt: "Students of Ashraf Islamia Model Public School wearing animal headbands during a school activity",
       objectPosition: "center center",
-      temporary: true
+      temporary: false
     },
     communityImage: {
       id: "about-community-img",
-      url: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1000",
-      alt: "Students together in a positive school community environment",
-      objectPosition: "center 30%",
-      temporary: true
+      url: "assets/images/about_community_values.jpg",
+      alt: "Students and teachers holding saplings and national flag in front of Ashraf Islamia Model Public School Mirza campus",
+      objectPosition: "center top",
+      temporary: false
     },
     leadershipImage: {
       id: "about-leadership-img",

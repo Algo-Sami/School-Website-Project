@@ -34,10 +34,10 @@
     images: [
       {
         id: 'admissions-hero-img',
-        url: 'assets/images/admissions_hero.png',
-        alt: 'Students in a welcoming educational atmosphere',
+        url: 'assets/images/admissions_hero_students.png',
+        alt: 'Students in uniform wearing animal character hats during a creative school activity at Ashraf Islamia Model Public School',
         objectPosition: 'center center',
-        temporary: true
+        temporary: false
       }
     ]
   };

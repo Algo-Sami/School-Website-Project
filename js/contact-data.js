@@ -14,10 +14,10 @@
       description: "Whether you're planning your child's next step, seeking information about our school, or simply want to get in touch, we're here to help.",
       image: {
         id: "contact-hero-img",
-        url: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1200&q=80",
-        alt: "Ashraf Islamia Model Public School campus environment - welcoming atmosphere",
+        url: "assets/images/contact_stay_connected.jpg",
+        alt: "Parent and student in a warm consultation with school counselor in a modern, connected school guidance office",
         objectPosition: "center center",
-        temporary: true
+        temporary: false
       }
     },
     office: {
@@ -58,13 +58,13 @@
     ],
     map: {
       embedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3310.871032890666!2d72.33306877636952!3d33.828551473241515!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38df814c1d428ab7%3A0x67ee65675e8df761!2sGovt%20Boys%20High%20School%20Mirza!5e0!3m2!1sen!2spk!4v1722350000000!5m2!1sen!2spk",
-      shareUrl: "https://maps.app.goo.gl/RLo4bd2LGdHeBaxN7"
+      title: "Ashraf Islamia Model Public Secondary School Location Map"
     }
   };
 
   /**
    * Graceful Image Population with Fallback System.
-   * If `item.url` is present and valid, appends an `<img>` element.
+   * If `item.url` is present and valid, appends or updates an `<img>` element.
    * If `item.url` is empty or fails to load, leaves the existing placeholder overlay visual untouched.
    */
   function populateImages() {
@@ -74,7 +74,11 @@
     const container = document.getElementById(heroImage.id);
     if (!container) return;
 
-    const img = document.createElement('img');
+    let img = container.querySelector('img');
+    if (!img) {
+      img = document.createElement('img');
+      container.appendChild(img);
+    }
     img.src = heroImage.url;
     img.alt = heroImage.alt || 'School visual';
     img.loading = 'eager';
@@ -87,8 +91,6 @@
     img.onerror = () => {
       img.remove(); // Remove broken image element so CSS placeholder remains visible
     };
-
-    container.appendChild(img);
   }
 
   /**
